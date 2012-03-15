@@ -4,18 +4,27 @@ import hook_manager
 
 """
 Todo:
- test run
  test map switch
 
  real log format
+  one dump file per class
+  tight struct.pack dump format
+  dump file stores seek-index in separate file for each hour
+  flush every 60(?) seconds
 
-Bugs:
- why win=None sometimes?
+word search
+  add inverted word index for each file (word->[pos])
+   bdb? something more stable?
+
+---Later
+  utility for reading and stats
+  crypto
 """
 
-WIN_PREFIX = 0
-KEY_PREFIX = 1
-MOUSE_PREFIX = 2
+WIN_PREFIX = 0 #class, title, geo, time
+KEY_PREFIX = 1 #keycode,state,c, press, time
+MOUSE_CLICK_PREFIX = 2 #button, press, time
+MOUSE_MOVE_PREFIX = 3 #[(coord, time)..]
 
 """
         if event.detail == 1:
@@ -36,7 +45,7 @@ class Spook:
 
         self.nrmoves = 0
 
-        self.hm = pyxhook.HookManager()
+        self.hm = hook_manager.HookManager()
         self.cur_window = None
         self.cur_name = None
         self.log_cur_window()
@@ -50,8 +59,18 @@ class Spook:
         self.f.close()
 
     def log_cur_window(self):
-        cur_window = self.hm.local_dpy.get_input_focus().focus
-        cur_name = cur_window.get_wm_name()
+        cur_window = self.hm.the_display.get_input_focus().focus
+        cur_class = None
+        cur_name = None
+        while cur_class is None and cur_class is None:
+            if type(cur_window) is int:
+                print 'int?'
+                return
+            cur_name = cur_window.get_wm_name()
+            cur_class = cur_window.get_wm_class()
+            if cur_class is None:
+                cur_window = cur_window.query_tree().parent
+
         if cur_window == self.cur_window:
             if cur_name != self.cur_name:
                 self.cur_name = cur_name
@@ -60,21 +79,22 @@ class Spook:
         else:
             self.cur_window = cur_window
             self.cur_name = cur_name
-            print 'win', self.cur_name
+            geo = cur_window.get_geometry()
+            print 'win', cur_window.get_wm_class(), self.cur_name, (geo.x, geo.y, geo.width, geo.height), cur_window.id
             #binlog
 
 
-    def got_key(self, keycode, state, s):
+    def got_key(self, keycode, state, s, press):
         self.log_cur_window()
         if press:
             print keycode, state, s
         #binlog
 
 
-    def got_mouse_click(self, button, press, t):
+    def got_mouse_click(self, button, press):
         self.log_cur_window()
         if press:
-            print 'click', button, (t, time.time()), self.nrmoves
+            print 'click', button, self.nrmoves
         #binlog
 
     def got_mouse_move(self, x, y):
@@ -83,8 +103,10 @@ class Spook:
 
 if __name__ == '__main__':
     spook = Spook('output.log')
+
     try:
         time.sleep(1000000000)
-    except:
+    except KeyboardInterrupt:
         pass
+
     spook.close()

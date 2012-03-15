@@ -12,6 +12,12 @@ from Xlib import X, XK, display
 from Xlib.ext import record
 from Xlib.protocol import rq
 
+def state_to_idx(state): #this could be a dict, but after improvements a dict will not be enough
+    if state == 1: return 1
+    if state == 128: return 4
+    if state == 129: return 5
+    return 0
+
 class HookManager(threading.Thread):
     def __init__(self):
         threading.Thread.__init__(self)
@@ -26,19 +32,22 @@ class HookManager(threading.Thread):
         self.mouse_button_hook = lambda x: True
         self.mouse_move_hook = lambda x: True
 
-        self.contextEventMask = [X.KeyPress, X.MotionNotify, X.MappingNotify]
+        self.contextEventMask = [X.KeyPress, X.MotionNotify] #X.MappingNotify?
         
         self.the_display = display.Display()
+        self.record_display = display.Display()
         self.keymap = self.the_display._keymap_codes
         
     def run(self):
         # Check if the extension is present
-        if not self.the_display.has_extension("RECORD"):
+        if not self.record_display.has_extension("RECORD"):
             print "RECORD extension not found"
             sys.exit(1)
+        else:
+            print "RECORD extension present"
 
         # Create a recording context; we only want key and mouse events
-        self.ctx = self.the_display.record_create_context(
+        self.ctx = self.record_display.record_create_context(
                 0,
                 [record.AllClients],
                 [{
@@ -55,9 +64,9 @@ class HookManager(threading.Thread):
 
         # Enable the context; this only returns after a call to record_disable_context,
         # while calling the callback function in the meantime
-        self.the_display.record_enable_context(self.ctx, self.processevents)
+        self.record_display.record_enable_context(self.ctx, self.processevents)
         # Finally free the context
-        self.the_display.record_free_context(self.ctx)
+        self.record_display.record_free_context(self.ctx)
 
     def cancel(self):
         self.finished.set()
@@ -75,7 +84,7 @@ class HookManager(threading.Thread):
             return
         data = reply.data
         while len(data):
-            event, data = rq.EventField(None).parse_binary_value(data, self.the_display.display, None, None)
+            event, data = rq.EventField(None).parse_binary_value(data, self.record_display.display, None, None)
             if event.type in [X.KeyPress, X.KeyRelease]:
                 self.key_hook(*self.key_event(event))
             elif event.type in [X.ButtonPress, X.ButtonRelease]:
@@ -83,22 +92,22 @@ class HookManager(threading.Thread):
             elif event.type == X.MotionNotify:
                 self.mouse_move_hook(event.root_x, event.root_y)
             elif event.type == X.MappingNotify:
-                oldkeymap = self.the_display._keymap_codes
-                newkeymap = display.Display()._keymap_codes
-                print 'Change keymap!', oldkeymap == self.keymap, newkeymap == self.keymap
+                self.the_display.refresh_keyboard_mapping()
+                newkeymap = self.the_display._keymap_codes
+                print 'Change keymap!', newkeymap == self.keymap
                 self.keymap = newkeymap
                 
 
     def get_key_name(self, keycode, state):
-        state_idx = stateToIdx(state)
-        cn = _keymap_codes[keycode][state_idx]
+        state_idx = state_to_idx(state)
+        cn = self.keymap[keycode][state_idx]
         if cn < 256:
-            return chr(cn)
+            return chr(cn).decode('latin1').encode('utf8')
         else:
             return self.lookup_keysym(cn)
 
     def key_event(self, event):
-        return event.detail, event.state, self.get_key_name(event.detail, event.state)
+        return event.detail, event.state, self.get_key_name(event.detail, event.state), event.type == X.KeyPress
     
     def button_event(self, event):
         return event.detail, event.type == X.ButtonPress

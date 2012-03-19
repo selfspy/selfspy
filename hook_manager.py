@@ -102,7 +102,7 @@ class HookManager(threading.Thread):
         state_idx = state_to_idx(state)
         cn = self.keymap[keycode][state_idx]
         if cn < 256:
-            return chr(cn).decode('latin1').encode('utf8')
+            return chr(cn).decode('latin1')#.encode('utf8')
         else:
             return self.lookup_keysym(cn)
 

@@ -6,41 +6,56 @@ import struct
 import Xlib.error
 
 import hook_manager
-from models import Process, Window, Focus, Session
+import models
+from models import Process, Window, Geometry, Click, Keys
+
+SKIP_SET = {'Shift_L', 'Shift_R'}
 
 """
 Todo:
-  test map switch
-
-  document
+  daemonize
+  choose db-location
+-
+  change name to spy? 
+--
+  optional crypto on Keys.text and Keys.timings
+  timings in json
+  compress text and timings
+  ask for pw in TTY
+  if not TTY, use tk
+--
   simple utility for reading and stats
+--
+  README
+-
+  test map switch
+  general testing
+  no printing
+-
+
+
 ---Later
-
+  replay key and mouse for process and time interval (maybe store as macro)
   word search
-  optional crypto
-"""
 
 """
-        if event.detail == 1:
-            MessageName = "mouse left "
-        elif event.detail == 3:
-            MessageName = "mouse right "
-        elif event.detail == 2:
-            MessageName = "mouse middle "
-        elif event.detail == 5:
-            MessageName = "mouse wheel down "
-        elif event.detail == 4:
-            MessageName = "mouse wheel up "
-"""
+
+
+#Mouse buttons: left button: 1, middle: 2, right: 3, scroll up: 4, down:5
+
 
 class Spook:
-    def __init__(self):
+    def __init__(self, session_maker):
+        self.session_maker = session_maker
         self.session = None
 
         self.nrmoves = 0
+        self.latestx = 0
+        self.latesty = 0
+        self.lastspecial = None
+        self.specials_in_row = 0
 
         self.curtext = u""
-        self.mousing = []
         self.timings = []
         
         self.started = NOW()
@@ -71,22 +86,34 @@ class Spook:
 
         self.cur_win_id = cur_window.id
 
-    def store_focus(self, new_win=False):
-        if self.timings or (self.mousing and new_win):
-            print len(self.timings), len(self.mousing)
-            geo = self.cur_window.get_geometry()
-            self.session.add(Focus(self.curtext, self.timings, self.started, self.cur_win_id, self.mousing,
-                                   geo.x, geo.y, geo.width, geo.height))
+    def maybe_end_specials(self):
+        if self.specials_in_row == 1:
+            self.curtext += '>'
+        elif self.specials_in_row > 1:
+            self.curtext += 'x%d>' % self.specials_in_row
+        self.specials_in_row = 0
+        self.lastspecial = None
+
+    def store_click(self, button, press):
+        if press:
+            print 'mouse', button, self.nrmoves
+        self.session.add(Click(button, press, self.latestx, self.latesty, self.nrmoves, self.cur_win_id, self.cur_geo_id))
+        self.session.commit()
+        self.nrmoves = 0
+
+    def store_keys(self):
+        if self.timings:
+            self.maybe_end_specials()
+            print 'keys', len(self.timings)
+
+            self.session.add(Keys(self.curtext, self.timings, self.started, self.cur_win_id, self.cur_geo_id))
             self.session.commit()
 
             self.started = NOW()
             self.curtext = u""
             self.timings = []
-            self.mousing = []
 
-    def log_cur_window(self):
-        self.session = Session()
-
+    def get_cur_window(self):
         i = 0
         while True:
             try:
@@ -96,7 +123,7 @@ class Spook:
                 while cur_class is None and cur_class is None:
                     if type(cur_window) is int:
                         print 'int?'
-                        return
+                        return None, None, None
             
                     cur_name = cur_window.get_wm_name()
                     cur_class = cur_window.get_wm_class()
@@ -107,16 +134,33 @@ class Spook:
                 i += 1
                 if i >= 10:
                     print 'Really bad win..'
-                    return
+                    return None, None, None
                 continue
             break
-        cur_class = cur_class[1]
+        return cur_class[1], cur_window, cur_name
+        
+
+    def check_geometry(self):
+        geo = self.cur_window.get_geometry()
+        cur_geo = self.session.query(Geometry).filter_by(xpos=geo.x, ypos=geo.y, width=geo.width, height=geo.height).scalar()
+        if cur_geo is None:
+            cur_geo = Geometry(geo)
+            self.session.add(cur_geo)
+            self.session.commit()
+        self.cur_geo_id = cur_geo.id
+
+    def log_cur_window(self):
+        cur_class, cur_window, cur_name = self.get_cur_window()
+        if cur_class is None: return
+
+        self.session = self.session_maker()
 
         if cur_class != self.cur_class:
             self.cur_class = cur_class
-            cur_process = self.session.query(Process).filter_by(name=self.cur_class.decode('latin1')).scalar()
+            proc_name = self.cur_class.decode('latin1')
+            cur_process = self.session.query(Process).filter_by(name=proc_name).scalar()
             if cur_process is None:
-                cur_process = Process(self.cur_class.decode('latin1'))
+                cur_process = Process(proc_name)
                 self.session.add(cur_process)
                 self.session.commit()
             
@@ -126,32 +170,47 @@ class Spook:
         if cur_window != self.cur_window or cur_name != self.cur_name:
             self.cur_window = cur_window
             self.cur_name = cur_name
-            self.store_focus(new_win=True)
+            self.store_keys()
             self.store_window()
+
+        self.check_geometry()
 
     def got_key(self, keycode, state, s, press):
         self.log_cur_window()
         if press:
-            if len(s) == 1:
-                self.curtext += s
-            self.timings.append((s, time.time()))
+            if s not in SKIP_SET and not (s[0] == '[' and s[-1] == ']'):
+                if len(s) == 1:
+                    self.maybe_end_specials()
+                    self.curtext += s
+                else:
+                    if self.lastspecial != s:
+                        self.maybe_end_specials()
+                        self.curtext += '<[%s]' % s
+                        self.specials_in_row = 1
+                    else:
+                        self.specials_in_row += 1
+                    self.lastspecial = s
+            if self.specials_in_row < 2:
+                self.timings.append((s, time.time()))
 
     def got_mouse_click(self, button, press):
         self.log_cur_window()
-        self.mousing.append((button, time.time()))
+        self.store_click(button, press)
         if not (press or button in [4,5]):
-            self.store_focus()
+            self.store_keys()
 
     def got_mouse_move(self, x, y):
         self.nrmoves += 1
-        self.mousing.append((x,y, time.time()))
+        self.latestx = x
+        self.latesty = y
 
 if __name__ == '__main__':
-    spook = Spook()
+    spook = Spook(models.initialize('spook.db'))
 
-    try:
-        time.sleep(1000000000)
-    except KeyboardInterrupt:
-        pass
+    while True:
+        try:
+            time.sleep(1000000000)
+        except KeyboardInterrupt:
+            pass
 
     spook.close()

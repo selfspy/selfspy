@@ -1,7 +1,14 @@
 import time
+import os
+import sys
 from datetime import datetime
 NOW = datetime.now
 import struct
+
+
+import daemon
+import lockfile
+import signal
 
 import Xlib.error
 
@@ -11,18 +18,28 @@ from models import Process, Window, Geometry, Click, Keys
 
 SKIP_SET = {'Shift_L', 'Shift_R'}
 
+HOME_DIR = '/var/lib/selfspy'
+DBNAME = 'selfspy.sqlite'
+LOCK_FILE = '/var/run/selfspy/selfspy.pid'
+
 """
 Todo:
-  daemonize
-  choose db-location
+  argparse
+
+  set password
+  choose HOME_DIR
+  choose LOCK_FILE
 -
-  change name to spy? 
+  change name to selfspy 
+-
+  proper logging
+- 
+  make unthreaded
 --
   optional crypto on Keys.text and Keys.timings
   timings in json
-  compress text and timings
-  ask for pw in TTY
-  if not TTY, use tk
+  compress text and timings (check size difference on existing db)
+  ask for pw in tk, if not command line
 --
   simple utility for reading and stats
 --
@@ -35,6 +52,7 @@ Todo:
 
 
 ---Later
+  documentation, unittests, pychecker ;)
   replay key and mouse for process and time interval (maybe store as macro)
   word search
 
@@ -45,8 +63,8 @@ Todo:
 
 
 class Spook:
-    def __init__(self, session_maker):
-        self.session_maker = session_maker
+    def __init__(self):
+        self.session_maker = None
         self.session = None
 
         self.nrmoves = 0
@@ -65,13 +83,13 @@ class Spook:
         self.cur_process_id = None
         self.cur_win_id = None
 
+    def run(self):
         self.hm = hook_manager.HookManager()
         self.log_cur_window()
         self.hm.key_hook = self.got_key
         self.hm.mouse_button_hook = self.got_mouse_click
         self.hm.mouse_move_hook = self.got_mouse_move
 
-        self.log_cur_window()
         self.hm.start()
 
     def close(self):
@@ -205,12 +223,34 @@ class Spook:
         self.latesty = y
 
 if __name__ == '__main__':
-    spook = Spook(models.initialize('spook.db'))
+    spook = Spook()
 
-    while True:
-        try:
-            time.sleep(1000000000)
-        except KeyboardInterrupt:
-            pass
+    lock = lockfile.FileLock(LOCK_FILE)
+    if lock.is_locked():
+        print '%s is locked! I am probably already running.' % LOCK_FILE #log!
+        print 'If you can find no selfspy process running, it is a stale lock and you can safely remove it.'
+        print 'Shutting down.'
+        sys.exit()
 
-    spook.close()
+    context = daemon.DaemonContext(
+        working_directory=HOME_DIR,
+        pidfile=lock,
+        stdout = sys.stdout,
+        stderr = sys.stderr
+    )
+
+    context.signal_map = {
+        signal.SIGTERM: 'terminate',
+        signal.SIGHUP: 'terminate'
+    }
+    
+    try:
+        with context:
+            spook.session_maker = models.initialize(os.path.join(HOME_DIR, DBNAME))
+            spook.run()
+            while True:
+                time.sleep(1000000000)
+    except SystemExit:
+        spook.close()
+
+

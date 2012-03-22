@@ -1,13 +1,6 @@
-#!/usr/bin/env python
-
 import time
-import os
-import sys
 from datetime import datetime
 NOW = datetime.now
-import struct
-
-
 
 import Xlib.error
 
@@ -20,7 +13,6 @@ SKIP_SET = {'Shift_L', 'Shift_R'}
 """
 Todo:
   change name to selfspy
-  split spook.py to two files.
 - 
   make unthreaded
 --
@@ -47,13 +39,11 @@ Todo:
 
 """
 
-
 #Mouse buttons: left button: 1, middle: 2, right: 3, scroll up: 4, down:5
 
-
-class Spook:
-    def __init__(self):
-        self.session_maker = None
+class ActivityStore:
+    def __init__(self, db_name):
+        self.session_maker = models.initialize(db_name)
         self.session = None
 
         self.nrmoves = 0

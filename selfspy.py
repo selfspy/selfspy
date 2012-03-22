@@ -44,14 +44,17 @@ def parse_config():
 
 if __name__ == '__main__':
     args = vars(parse_config())
+
     try:
         args['gid'] = int(args['gid'])
     except ValueError:
         args['gid'] = grp.getgrnam(args['gid'])
+
     try:
         args['uid'] = int(args['uid'])
     except ValueError:
         args['uid'] = pwd.getpwnam(args['uid']).pw_gid
+
     print args
 
     lock = lockfile.FileLock(args['lock_file'])
@@ -74,12 +77,10 @@ if __name__ == '__main__':
         signal.SIGTERM: 'terminate',
         signal.SIGHUP: 'terminate'
     }
-    
-    try:
-        with context:
-            astore = ActivityStore(os.path.join(args['data_dir'], DBNAME))
+
+    with context:    
+        astore = ActivityStore(os.path.join(args['data_dir'], DBNAME))
+        try:
             astore.run()
-            while True:
-                time.sleep(1000000000)
-    except SystemExit:
-        astore.close()
+        except SystemExit:
+            astore.close()

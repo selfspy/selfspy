@@ -4,7 +4,7 @@ NOW = datetime.now
 
 import Xlib.error
 
-import hook_manager
+import sniff_x
 import models
 from models import Process, Window, Geometry, Click, Keys
 
@@ -12,17 +12,17 @@ SKIP_SET = {'Shift_L', 'Shift_R'}
 
 """
 Todo:
-  change name to selfspy
-- 
-  make unthreaded
+  change git name to selfspy
 --
   optional crypto on Keys.text and Keys.timings
   timings in json
   compress text and timings (check size difference on existing db)
-  ask for pw in tk, if not command line
 --
   simple utility for reading and stats
+  take pw from default config file, if exists
 --
+  ask for pw in tk, if not command line
+-
   README
 -
   test map switch
@@ -63,16 +63,16 @@ class ActivityStore:
         self.cur_win_id = None
 
     def run(self):
-        self.hm = hook_manager.HookManager()
+        self.sniffer = sniff_x.SniffX()
         self.log_cur_window()
-        self.hm.key_hook = self.got_key
-        self.hm.mouse_button_hook = self.got_mouse_click
-        self.hm.mouse_move_hook = self.got_mouse_move
+        self.sniffer.key_hook = self.got_key
+        self.sniffer.mouse_button_hook = self.got_mouse_click
+        self.sniffer.mouse_move_hook = self.got_mouse_move
 
-        self.hm.start()
+        self.sniffer.run()
 
     def close(self):
-        self.hm.cancel()
+        self.sniffer.cancel()
 
     def store_window(self):
         cur_window = self.session.query(Window).filter_by(title=self.cur_name.decode('latin1'), process_id=self.cur_process_id).scalar()
@@ -114,7 +114,7 @@ class ActivityStore:
         i = 0
         while True:
             try:
-                cur_window = self.hm.the_display.get_input_focus().focus
+                cur_window = self.sniffer.the_display.get_input_focus().focus
                 cur_class = None
                 cur_name = None
                 while cur_class is None and cur_class is None:

@@ -1,6 +1,4 @@
-#    This file is loosely based on pyxhook.py by 
-#    Tim Alexander <dragonfyre13@gmail.com> and Daniel Folkinshteyn <nanotube@users.sf.net>
-#    but almost nothing remains of the original code
+# This file is loosely based on examples/record_demo.py in python-xlib
 
 import sys
 import os
@@ -12,7 +10,7 @@ from Xlib import X, XK, display
 from Xlib.ext import record
 from Xlib.protocol import rq
 
-def state_to_idx(state): #this could be a dict, but after improvements a dict will not be enough
+def state_to_idx(state): #this could be a dict, but I might want to extend it.
     if state == 1: return 1
     if state == 128: return 4
     if state == 129: return 5

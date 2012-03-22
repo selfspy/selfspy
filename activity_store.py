@@ -12,8 +12,6 @@ SKIP_SET = {'Shift_L', 'Shift_R'}
 
 """
 Todo:
-  change git name to selfspy
---
   optional crypto on Keys.text and Keys.timings
   timings in json
   compress text and timings (check size difference on existing db)
@@ -126,7 +124,7 @@ class ActivityStore:
                     cur_class = cur_window.get_wm_class()
                     if cur_class is None:
                         cur_window = cur_window.query_tree().parent
-            except Xlib.error.BadWindow:
+            except Xlib.error.XError:
                 print 'Badwin'
                 i += 1
                 if i >= 10:

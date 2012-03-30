@@ -1,8 +1,11 @@
+import zlib
+import json
 import time
 from datetime import datetime
 NOW = datetime.now
 
 import Xlib.error
+import cPickle #remove after mem profile
 
 import sniff_x
 import models
@@ -10,39 +13,21 @@ from models import Process, Window, Geometry, Click, Keys
 
 SKIP_SET = {'Shift_L', 'Shift_R'}
 
-"""
-Todo:
-  optional crypto on Keys.text and Keys.timings
-  timings in json
-  compress text and timings (check size difference on existing db)
---
-  simple utility for reading and stats
-  take pw from default config file, if exists
---
-  ask for pw in tk, if not command line
--
-  README
--
-  test map switch
-  general testing
-  no printing
-  remove stdout and stderr from DaemonContext
--
-
-
----Later
-  documentation, unittests, pychecker ;)
-  replay key and mouse for process and time interval (maybe store as macro)
-  word search
-
-"""
-
 #Mouse buttons: left button: 1, middle: 2, right: 3, scroll up: 4, down:5
 
+def pad(s, padnum):
+    ls = len(s)
+    if ls % padnum == 0:
+        return s
+    return s + '\0' * (padnum - (ls % padnum))
+
 class ActivityStore:
-    def __init__(self, db_name):
+    def __init__(self, db_name, encrypter=None):
         self.session_maker = models.initialize(db_name)
         self.session = None
+
+        if encrypter:
+            self.encrypter = encrypter
 
         self.nrmoves = 0
         self.latestx = 0
@@ -52,6 +37,7 @@ class ActivityStore:
 
         self.curtext = u""
         self.timings = []
+        self.last_key_time = time.time()
         
         self.started = NOW()
         self.cur_class = None
@@ -71,6 +57,17 @@ class ActivityStore:
 
     def close(self):
         self.sniffer.cancel()
+        self.store_keys()
+
+    def maybe_encrypt(self, s):
+        if self.encrypter:
+            s = pad(s, 8)
+            s = self.encrypter.encrypt(s)
+        return s
+
+    def timings_to_str(self):
+        z = zlib.compress(json.dumps(self.timings))
+        return self.maybe_encrypt(z)
 
     def store_window(self):
         cur_window = self.session.query(Window).filter_by(title=self.cur_name.decode('latin1'), process_id=self.cur_process_id).scalar()
@@ -99,14 +96,19 @@ class ActivityStore:
     def store_keys(self):
         if self.timings:
             self.maybe_end_specials()
-            print 'keys', len(self.timings)
-
-            self.session.add(Keys(self.curtext, self.timings, self.started, self.cur_win_id, self.cur_geo_id))
+            
+            enc_timings = self.timings_to_str()
+            enc_curtext = self.maybe_encrypt(self.curtext.encode('utf8'))
+                
+            self.session.add(Keys(enc_curtext, enc_timings, self.started, self.cur_win_id, self.cur_geo_id))
             self.session.commit()
+
+            print 'keys', len(self.timings), len(cPickle.dumps(self.timings, 2)), len(enc_timings)
 
             self.started = NOW()
             self.curtext = u""
             self.timings = []
+            self.last_key_time = time.time()
 
     def get_cur_window(self):
         i = 0
@@ -136,7 +138,18 @@ class ActivityStore:
         
 
     def check_geometry(self):
-        geo = self.cur_window.get_geometry()
+        i = 0
+        while True:
+            try:
+                geo = self.cur_window.get_geometry()
+                break
+            except Xlib.error.XError:
+                print 'Badwin in geo'
+                i += 1
+                if i >= 10:
+                    print 'Really bad win in geo'
+                    return
+            
         cur_geo = self.session.query(Geometry).filter_by(xpos=geo.x, ypos=geo.y, width=geo.width, height=geo.height).scalar()
         if cur_geo is None:
             cur_geo = Geometry(geo)
@@ -171,6 +184,7 @@ class ActivityStore:
         self.check_geometry()
 
     def got_key(self, keycode, state, s, press):
+        now = time.time()
         self.log_cur_window()
         if press:
             if s not in SKIP_SET and not (s[0] == '[' and s[-1] == ']'):
@@ -186,7 +200,8 @@ class ActivityStore:
                         self.specials_in_row += 1
                     self.lastspecial = s
             if self.specials_in_row < 2:
-                self.timings.append((s, time.time()))
+                self.timings.append((s, now - self.last_key_time))
+                self.last_key_time = now
 
     def got_mouse_click(self, button, press):
         self.log_cur_window()

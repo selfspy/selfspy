@@ -1,7 +1,7 @@
 import datetime
 
 from sqlalchemy.ext.declarative import declarative_base, declared_attr
-from sqlalchemy import Index, Column, Boolean, Integer, Unicode, UnicodeText, DateTime, PickleType, ForeignKey, create_engine
+from sqlalchemy import Index, Column, Boolean, Integer, Unicode, UnicodeText, DateTime, Binary, ForeignKey, create_engine
 from sqlalchemy.orm import sessionmaker, relationship, backref
 
 def initialize(fname):
@@ -89,7 +89,7 @@ class Click(SpookMixin, Base):
         return "<Click (%d, %d), (%d, %d, %d)>" % (self.xpos, self.ypos, self.button, self.press, self.nrmoves)
 
 class Keys(SpookMixin, Base):
-    text = Column(UnicodeText, nullable=False)
+    text = Column(Binary, nullable=False)
     started = Column(DateTime, nullable=False)
 
     window_id = Column(Integer, ForeignKey('window.id'), nullable=False)
@@ -98,7 +98,7 @@ class Keys(SpookMixin, Base):
     geometry_id = Column(Integer, ForeignKey('geometry.id'), nullable=False)
     geometry = relationship("Geometry", backref=backref('keys'))
 
-    timings = Column(PickleType)
+    timings = Column(Binary)
 
     def __init__(self, text, timings, started, window_id, geometry_id):
         self.text = text

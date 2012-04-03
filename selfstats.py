@@ -2,6 +2,8 @@
 
 import os
 import sys
+import re
+import datetime
 
 import argparse
 import ConfigParser
@@ -13,35 +15,92 @@ from selfspy import DATA_DIR, DBNAME
 from password_dialog import get_password
 import check_password
 
+import models
+
 """
-    add database fields to allow more of the summaries without a password
-    note in the help which commands require password
+    interpret period
 
-    add decryption and unpacking (and packing) to models.py
-    add lazy iterator to models.py
+    decompression
 
-    add filter to models.py
+    check_needs
 
-    do_filter
+    get_password
 
+    print rows
+    print rows + text
+
+    if is_summary: print len(lines)
+
+    test
 --
-    check_need_text
-    check_is_summary
-    get password
+    argument groups
 
-    print listing
+    prettier printing
+
+    mouse stuff
+
+    warn for bad regexp
 
     calc summary
     print summary
-"""
-class Selfstats:
-    def __init__(self, args):
-        self.args = args
 
-        self.check_need_text()
-        if self.need_text:
+    test
+"""
+
+def make_time_string(dates, clock):
+    now = datetime.datetime.now()
+    now2 = datetime.datetime.now()
+
+    if dates is None: dates = []
+
+    if len(dates) > 3:
+        print 'Max three arguments to date', dates
+        sys.exit(1)
+
+    try:
+        if len(dates) == 3: now.replace(year=dates[0])
+        if len(dates) >= 2: now.replace(month=dates[0])
+        if len(dates) >= 1: now.replace(day=dates[0])
+
+        if len(dates) == 2:
+            if now > now2:
+                now.replace(year=now.year - 1)
+    
+        if len(dates) == 1:
+            if now > now2:
+                m = now.month - 1:
+                if m:
+                    now.replace(month=m)
+                else:
+                    now.replace(year=now.year - 1, month=12)
+    except ValueError:
+        print 'Malformed date', dates
+        sys.exit(1)
+
+    if clock:
+        try:
+            hour, minute = clock.split(':')
+        except ValueError:
+            print 'Malformed clock', clock
+            sys.exit(1)
+        
+        if now > now2:
+            now -= datetime.timedelta(days=1)
+
+    return now.strftime('%Y %m %d %H:%M')
+    
+
+class Selfstats:
+    def __init__(self, db_name, args):
+        self.args = args
+        self.session_maker = models.initialize(db_name)
+
+        self.check_needs()
+        if self.need_text or self.need_keys:
             pass #get password
-        self.do_filter()
+
+        self.filter_keys()
+        self.filter_mouse()
 
         if self.check_is_summary():
             self.calc_summary()
@@ -49,8 +108,57 @@ class Selfstats:
         else:
             self.show_rows()
 
-    def do_filter(self):
-        pass
+    def maybe_reg_filter(self, q, name, names, table, source_prop, target_prop):
+        if self.args[name] is not None:
+            ids = []
+            try:
+                reg = re.compile(self.args[name])
+            except re.error, e:
+                print 'Error in regular expression', str(e)
+                sys.exit(1)
+
+            for x in session.query(table).all():
+                if reg.match(x[source_prop]):
+                    ids += x['id']
+            print len(ids), '%s matched' % names
+            q = q.filter(target_prop.in_(ids))
+        return q
+
+    def filter_keys(self):
+        session = session_maker()
+        Keys = models.Keys
+        props = [Keys.created_at, Keys.started, Keys.nrkeys]
+        if self.need_text: props += Keys.text
+        if self.need_keys: props += Keys.keys
+        if self.need_timings: props += Keys.timings
+
+        q = session.query(*props)
+
+        if self.args['time'] or self.args['clock']:
+            s = make_time_string(self.args['time'], self.args['clock'])
+            q = q.filter(Keys.created_at >= s)
+        elif self.args['id'] is not None:
+            q = q.filter(Keys.id >= self.args['id'])
+
+        if self.args['period'] is not None:
+            q = make_period(q, self.args['period'])
+
+        if self.args['min_keys'] is not None:
+            q = q.filter(Keys.nrkeys >= self.args['min_keys'])
+
+        q = maybe_reg_filter(q, 'process', 'process(es)', models.Process, 'name', Keys.process_id,)
+        q = maybe_reg_filter(q, 'title', 'title(s)', models.Window, 'title', Keys.window_id)
+        
+        if args['body']:
+            bodrex = re.compile(args['body'])
+            for x in q.all():
+                body = models.maybe_decrypt(x.text)
+                if bodrex.match(body):
+                    yield x
+        else:
+            for x in q.all():
+                yield x
+        
 
     def show_rows(self):
       #tabulate data
@@ -105,9 +213,9 @@ def parse_config():
 
     parser.add_argument('-T', '--title', type=str, metavar='regexp', help='Only allow entries where the title matches this <regexp>')
     parser.add_argument('-P', '--process', type=str, metavar='regexp', help='Only allow entries where the process name matches this <regexp>')
-    parser.add_argument('-B', '--body', type=str, metavar='regexp', help='Only allow entries where the body matches this <regexp>')
+    parser.add_argument('-B', '--body', type=str, metavar='regexp', help='Only allow entries where the body matches this <regexp>. Requires password.')
 
-    parser.add_argument('-s', '--showtext', nargs=0, help='Also show the text column. This switch is ignored if at lesat one of the summary options are used.')
+    parser.add_argument('-s', '--showtext', nargs=0, help='Also show the text column. This switch is ignored if at lesat one of the summary options are used. Requires password.')
 
     parser.add_argument('--kcratio', nargs=0, help='Summarize the ratio between keystrokes and clicks (not scroll up or down) in the given period.')
     parser.add_argument('--karatio', nargs=0, help='Summarize the ratio between keystrokes and time active in the given period.')
@@ -115,7 +223,7 @@ def parse_config():
     parser.add_argument('--keystrokes', nargs=0, help='Summarize number of keystrokes')
     parser.add_argument('--clicks', nargs=0, help='Summarize number of mouse button clicks for all buttons.')
 
-    parser.add_argument('--key-freqs', nargs=0, help='Summarize a table of absolute and relative number of keystrokes for each used key during the time period.')
+    parser.add_argument('--key-freqs', nargs=0, help='Summarize a table of absolute and relative number of keystrokes for each used key during the time period. Requires password.')
 
     parser.add_argument('--active', type=int, metavar='seconds', nargs='?', const=ACTIVE_SECONDS, help='Summarize total time spent active during the period. The optional argument gives how many seconds after each mouse click (including scroll up or down) or keystroke that you are considered active. Default is %d' % ACTIVE_SECONDS)
     parser.add_argument('--periods', type=int, metavar='seconds', nargs='?', const=ACTIVE_SECONDS, help='List active time periods. Optional argument works same as for --active')
@@ -146,5 +254,5 @@ if __name__ == '__main__':
             print 'Password failed'
             sys.exit(1)
 
-
+    Selfstats(os.path.join(args['data_dir'], DBNAME)
 

@@ -1,5 +1,3 @@
-import zlib
-import json
 import time
 from datetime import datetime
 NOW = datetime.now
@@ -15,19 +13,12 @@ SKIP_SET = {'Shift_L', 'Shift_R'}
 
 #Mouse buttons: left button: 1, middle: 2, right: 3, scroll up: 4, down:5
 
-def pad(s, padnum):
-    ls = len(s)
-    if ls % padnum == 0:
-        return s
-    return s + '\0' * (padnum - (ls % padnum))
-
 class ActivityStore:
     def __init__(self, db_name, encrypter=None):
         self.session_maker = models.initialize(db_name)
         self.session = None
 
-        if encrypter:
-            self.encrypter = encrypter
+        models.ENCRYPTER = encrypter
 
         self.nrmoves = 0
         self.latestx = 0
@@ -36,6 +27,7 @@ class ActivityStore:
         self.specials_in_row = 0
 
         self.curtext = u""
+        self.keys = []
         self.timings = []
         self.last_key_time = time.time()
         
@@ -59,16 +51,6 @@ class ActivityStore:
         self.sniffer.cancel()
         self.store_keys()
 
-    def maybe_encrypt(self, s):
-        if self.encrypter:
-            s = pad(s, 8)
-            s = self.encrypter.encrypt(s)
-        return s
-
-    def timings_to_str(self):
-        z = zlib.compress(json.dumps(self.timings))
-        return self.maybe_encrypt(z)
-
     def store_window(self):
         cur_window = self.session.query(Window).filter_by(title=self.cur_name.decode('latin1'), process_id=self.cur_process_id).scalar()
         if cur_window is None:
@@ -89,7 +71,7 @@ class ActivityStore:
     def store_click(self, button, press):
         if press:
             print 'mouse', button, self.nrmoves
-        self.session.add(Click(button, press, self.latestx, self.latesty, self.nrmoves, self.cur_win_id, self.cur_geo_id))
+            self.session.add(Click(button, press, self.latestx, self.latesty, self.nrmoves, self.cur_process_id, self.cur_win_id, self.cur_geo_id))
         self.session.commit()
         self.nrmoves = 0
 
@@ -97,17 +79,13 @@ class ActivityStore:
         if self.timings:
             self.maybe_end_specials()
             
-            enc_timings = self.timings_to_str()
-            enc_curtext = self.maybe_encrypt(self.curtext.encode('utf8'))
-                
-            self.session.add(Keys(enc_curtext, enc_timings, self.started, self.cur_win_id, self.cur_geo_id))
+            self.session.add(Keys(self.curtext.encode('utf8'), self.keys, self.timings, self.started, self.cur_process_id, self.cur_win_id, self.cur_geo_id))
             self.session.commit()
-
-            print 'keys', len(self.timings), len(cPickle.dumps(self.timings, 2)), len(enc_timings)
 
             self.started = NOW()
             self.curtext = u""
             self.timings = []
+            self.keys = []
             self.last_key_time = time.time()
 
     def get_cur_window(self):
@@ -200,7 +178,8 @@ class ActivityStore:
                         self.specials_in_row += 1
                     self.lastspecial = s
             if self.specials_in_row < 2:
-                self.timings.append((s, now - self.last_key_time))
+                self.keys.append(s)
+                self.timings.append(now - self.last_key_time)
                 self.last_key_time = now
 
     def got_mouse_click(self, button, press):

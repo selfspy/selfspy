@@ -28,16 +28,17 @@ Todo:
   allow not-text argument to avoid storing text at all. This makes the program never ask for passwords
   remove guid and uid flags
 
-  periodic emails from selfspy (or perhaps just have note in the README on how this can be accomplished with cron, mail and selfstats?)
 -
   README
+
+  periodic emails from selfspy (or perhaps just have note in the README on how this can be accomplished with cron, mail and selfstats?)
 --
   test map switch
   general testing
   no printing
   remove stdout and stderr from DaemonContext
   remove cPickle
-
+  requirements file
 
 ---Later
   code documentation, unittests, pychecker ;)

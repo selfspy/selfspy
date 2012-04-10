@@ -32,13 +32,14 @@ Todo:
   README
 
   periodic emails from selfspy (or perhaps just have note in the README on how this can be accomplished with cron, mail and selfstats?)
---
-  test map switch
-  general testing
+-
   no printing
   remove stdout and stderr from DaemonContext
   remove cPickle
   requirements file
+--
+  test keymap switch
+  general testing
 
 ---Later
   code documentation, unittests, pychecker ;)

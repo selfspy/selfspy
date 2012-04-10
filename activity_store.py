@@ -37,6 +37,7 @@ class ActivityStore:
         self.cur_name = None
         self.cur_process_id = None
         self.cur_win_id = None
+        self.cur_win_proc = None
 
     def run(self):
         self.sniffer = sniff_x.SniffX()
@@ -59,6 +60,8 @@ class ActivityStore:
             self.session.commit()
 
         self.cur_win_id = cur_window.id
+        self.cur_process_id = cur_window.process_id
+        self.cur_win_proc = cur_window.process_id
 
     def maybe_end_specials(self):
         if self.specials_in_row == 1:
@@ -71,7 +74,7 @@ class ActivityStore:
     def store_click(self, button, press):
         if press:
             print 'mouse', button, self.nrmoves
-            self.session.add(Click(button, press, self.latestx, self.latesty, self.nrmoves, self.cur_process_id, self.cur_win_id, self.cur_geo_id))
+            self.session.add(Click(button, press, self.latestx, self.latesty, self.nrmoves, self.cur_win_proc, self.cur_win_id, self.cur_geo_id))
         self.session.commit()
         self.nrmoves = 0
 
@@ -79,7 +82,7 @@ class ActivityStore:
         if self.timings:
             self.maybe_end_specials()
             
-            self.session.add(Keys(self.curtext.encode('utf8'), self.keys, self.timings, self.started, self.cur_process_id, self.cur_win_id, self.cur_geo_id))
+            self.session.add(Keys(self.curtext.encode('utf8'), self.keys, self.timings, self.started, self.cur_win_proc, self.cur_win_id, self.cur_geo_id))
             self.session.commit()
 
             self.started = NOW()
@@ -104,6 +107,7 @@ class ActivityStore:
                     cur_class = cur_window.get_wm_class()
                     if cur_class is None:
                         cur_window = cur_window.query_tree().parent
+
             except Xlib.error.XError:
                 print 'Badwin'
                 i += 1

@@ -23,7 +23,7 @@ class SpookMixin(object):
         return cls.__name__.lower()
 
     id = Column(Integer, primary_key=True)
-    created_at = Column(DateTime, default=datetime.datetime.now(), index=True)
+    created_at = Column(DateTime, default=datetime.datetime.now, index=True)
 
 
 class Process(SpookMixin, Base):
@@ -133,7 +133,7 @@ class Keys(SpookMixin, Base):
 
     def __init__(self, text, keys, timings, started, process_id, window_id, geometry_id):
         ztimings = zlib.compress(json.dumps(timings))
-        zkeys = maybe_encrypt(zlib.compress(json.dumps(timings)))
+        zkeys = maybe_encrypt(zlib.compress(json.dumps(keys)))
         ztext = maybe_encrypt(text)
 
         self.text = ztext
@@ -154,7 +154,7 @@ class Keys(SpookMixin, Base):
         return json.loads(zlib.decompress(keys))
 
     def __repr__(self):
-        return "<Keys %s>" % self.text
+        return "<Keys %s>" % self.nrkeys
 
 
 

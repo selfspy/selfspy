@@ -3,7 +3,7 @@ from datetime import datetime
 NOW = datetime.now
 
 import Xlib.error
-import cPickle #remove after mem profile
+import sqlalchemy
 
 import sniff_x
 import models
@@ -14,11 +14,13 @@ SKIP_SET = {'Shift_L', 'Shift_R'}
 #Mouse buttons: left button: 1, middle: 2, right: 3, scroll up: 4, down:5
 
 class ActivityStore:
-    def __init__(self, db_name, encrypter=None):
+    def __init__(self, db_name, encrypter=None, store_text=True):
         self.session_maker = models.initialize(db_name)
         self.session = None
 
         models.ENCRYPTER = encrypter
+
+        self.store_text = store_text
 
         self.nrmoves = 0
         self.latestx = 0
@@ -39,6 +41,14 @@ class ActivityStore:
         self.cur_win_id = None
         self.cur_win_proc = None
 
+    def trycommit(self):
+        for _ in xrange(1000):
+            try:
+                self.session.commit()
+                break
+            except sqlalchemy.exc.OperationalError:
+                time.sleep(1)
+
     def run(self):
         self.sniffer = sniff_x.SniffX()
         self.log_cur_window()
@@ -57,7 +67,7 @@ class ActivityStore:
         if cur_window is None:
             cur_window = Window(self.cur_name.decode('latin1'), self.cur_process_id)
             self.session.add(cur_window)
-            self.session.commit()
+            self.trycommit()
 
         self.cur_win_id = cur_window.id
         self.cur_process_id = cur_window.process_id
@@ -73,17 +83,20 @@ class ActivityStore:
 
     def store_click(self, button, press):
         if press:
-            print 'mouse', button, self.nrmoves
             self.session.add(Click(button, press, self.latestx, self.latesty, self.nrmoves, self.cur_win_proc, self.cur_win_id, self.cur_geo_id))
-        self.session.commit()
+        self.trycommit()
         self.nrmoves = 0
 
     def store_keys(self):
         if self.timings:
             self.maybe_end_specials()
             
+            if not self.store_text:
+                self.keys = []
+                self.curtext = u""
+            
             self.session.add(Keys(self.curtext.encode('utf8'), self.keys, self.timings, self.started, self.cur_win_proc, self.cur_win_id, self.cur_geo_id))
-            self.session.commit()
+            self.trycommit()
 
             self.started = NOW()
             self.curtext = u""
@@ -100,7 +113,6 @@ class ActivityStore:
                 cur_name = None
                 while cur_class is None and cur_class is None:
                     if type(cur_window) is int:
-                        print 'int?'
                         return None, None, None
             
                     cur_name = cur_window.get_wm_name()
@@ -109,10 +121,8 @@ class ActivityStore:
                         cur_window = cur_window.query_tree().parent
 
             except Xlib.error.XError:
-                print 'Badwin'
                 i += 1
                 if i >= 10:
-                    print 'Really bad win..'
                     return None, None, None
                 continue
             break
@@ -126,17 +136,15 @@ class ActivityStore:
                 geo = self.cur_window.get_geometry()
                 break
             except Xlib.error.XError:
-                print 'Badwin in geo'
                 i += 1
                 if i >= 10:
-                    print 'Really bad win in geo'
                     return
             
         cur_geo = self.session.query(Geometry).filter_by(xpos=geo.x, ypos=geo.y, width=geo.width, height=geo.height).scalar()
         if cur_geo is None:
             cur_geo = Geometry(geo)
             self.session.add(cur_geo)
-            self.session.commit()
+            self.trycommit()
         self.cur_geo_id = cur_geo.id
 
     def log_cur_window(self):
@@ -152,7 +160,7 @@ class ActivityStore:
             if cur_process is None:
                 cur_process = Process(proc_name)
                 self.session.add(cur_process)
-                self.session.commit()
+                self.trycommit()
             
             self.cur_process_id = cur_process.id
             

@@ -23,23 +23,17 @@ import check_password
 """
 
 Todo:
-  implement selfstats functionality
---
-  allow not-text argument to avoid storing text at all. This makes the program never ask for passwords
-  remove guid and uid flags
+  put weekly mail in cron
 
--
-  README
+  try rebooting with .xinitrc
 
-  periodic emails from selfspy (or perhaps just have note in the README on how this can be accomplished with cron, mail and selfstats?)
--
-  no printing
-  remove stdout and stderr from DaemonContext
-  remove cPickle
-  requirements file
+  try all queries from README
+  copy Pages to README
+
+  tag release in github
+
 --
   test keymap switch
-  general testing
 
 ---Later
   code documentation, unittests, pychecker ;)
@@ -70,27 +64,15 @@ def parse_config():
     parser.set_defaults(**defaults)
     parser.add_argument('-p', '--password', help='Encryption password. If you want to keep your database unencrypted, specify -p "" here. If you don\'t specify a password in the command line arguments or in a config file, a dialog will pop up, asking for the password. The most secure is to not use either command line or config file and instead type it in on startup.')
     parser.add_argument('-d', '--data-dir', help='Data directory for selfspy, where the database is stored. Remember that Selfspy must have read/write access. Default is %s' % DATA_DIR, default=DATA_DIR)
-    #These are probably pointless, as the daemon should be run by the local user anyway
-    parser.add_argument('-u', '--uid', help='User ID to switch process to on daemon start. You can specify either name or number. Default is to keep process uid, which is probably what you want.', default=os.getuid())
-    parser.add_argument('-g', '--gid', help='Group ID to switch process to on daemon start. You can specify either name or number. Default is to keep process gid, which is probably what you want.', default=os.getgid())
+
+    parser.add_argument('-n', '--no-text', action='store_true', help='Do not store what you type. This will make your database smaller and less sensitive to security breaches. Process name, window titles, window geometry, mouse clicks, number of keys pressed and key timings will still be stored, but not the actual letters. Key timings are stored to enable activity calculation in selfstats.py. If this switch is used, you will never be asked for password.')
 
     return parser.parse_args()
 
 if __name__ == '__main__':
     args = vars(parse_config())
 
-    try:
-        args['gid'] = int(args['gid'])
-    except ValueError:
-        args['gid'] = grp.getgrnam(args['gid'])
-
-    try:
-        args['uid'] = int(args['uid'])
-    except ValueError:
-        args['uid'] = pwd.getpwnam(args['uid']).pw_gid
-
     args['data_dir'] = os.path.expanduser(args['data_dir'])
-    print args #TODO: remove
 
     try:
         os.makedirs(args['data_dir'])
@@ -108,10 +90,7 @@ if __name__ == '__main__':
     context = daemon.DaemonContext(
         working_directory=args['data_dir'],
         pidfile=lock,
-        stdout=sys.stdout,
-        stderr=sys.stderr,
-        uid=args['uid'],
-        gid=args['gid']
+        stderr=sys.stderr
     )
 
     context.signal_map = {
@@ -120,6 +99,9 @@ if __name__ == '__main__':
     }
 
 
+    if args['no_text']:
+        args['password'] = ""
+    
     if args['password'] is None:
         args['password'] = get_password()
 
@@ -133,7 +115,7 @@ if __name__ == '__main__':
         sys.exit(1)
 
     with context:    
-        astore = ActivityStore(os.path.join(args['data_dir'], DBNAME), encrypter)
+        astore = ActivityStore(os.path.join(args['data_dir'], DBNAME), encrypter, store_text=(not args['no_text']))
                         
         try:
             astore.run()

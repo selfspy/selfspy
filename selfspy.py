@@ -23,13 +23,6 @@ import check_password
 """
 
 Todo:
-  put weekly mail in cron
-
-  try rebooting with .xinitrc
-
-  try all queries from README
-  copy Pages to README
-
   tag release in github
 
 --
@@ -69,10 +62,21 @@ def parse_config():
 
     return parser.parse_args()
 
+def make_encrypter(password):
+    if password == "":
+        encrypter = None
+    else:
+        encrypter = Blowfish.new(hashlib.md5(password).digest())
+    return encrypter
+
 if __name__ == '__main__':
     args = vars(parse_config())
 
     args['data_dir'] = os.path.expanduser(args['data_dir'])
+
+    def check_with_encrypter(password):
+        encrypter = make_encrypter(password)
+        return check_password.check(args['data_dir'], encrypter) 
 
     try:
         os.makedirs(args['data_dir'])
@@ -101,14 +105,11 @@ if __name__ == '__main__':
 
     if args['no_text']:
         args['password'] = ""
-    
-    if args['password'] is None:
-        args['password'] = get_password()
 
-    if args['password'] == "":
-        encrypter = None
-    else:
-        encrypter = Blowfish.new(hashlib.md5(args['password']).digest())
+    if args['password'] is None:
+        args['password'] = get_password(verify=check_with_encrypter)
+
+    encrypter = make_encrypter(args['password'])
 
     if not check_password.check(args['data_dir'], encrypter):
         print 'Password failed'

@@ -94,7 +94,7 @@ class Click(SpookMixin, Base):
         self.geometry_id = geometry_id
 
     def __repr__(self):
-        return "<Click (%d, %d), (%d, %d, %d)>" % (self.xpos, self.ypos, self.button, self.press, self.nrmoves)
+        return "<Click (%d, %d), (%d, %d, %d)>" % (self.x, self.y, self.button, self.press, self.nrmoves)
 
 def pad(s, padnum):
     ls = len(s)

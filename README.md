@@ -52,7 +52,7 @@ Everything you do is stored in a Sqlite database in your DATA_DIR. Things that y
 
 Unless you use the --no-text flag, selfspy will store everything you type in two <a href="http://en.wikipedia.org/wiki/Blowfish_(cipher)">Blowfish</a> encrypted columns in the database.
 
-Normally you would like Selfspy to start automatically when you launch X. The simplest way to accomplish this is to add selfspy.py to your *.xinitrc* file. When run, Selfspy will immediately spawn a daemon and exit.
+Normally you would like Selfspy to start automatically when you launch X. How to do this depends on your system, but it will normally mean editing *~/.xinitrc* or *~/.xsession*. If you run KDE, *~/.kde/Autostart*, is a good place to put startup scripts. When run, Selfspy will immediately spawn a daemon and exit.
 
 ### Example Statistics
 *"OK, so now all this data will be stored, but what can I use it for?"*
@@ -255,5 +255,5 @@ See the README file or http://gurgeh.github.com/selfspy for examples.
 To monitor that Selfspy works as it should and to continuously get feedback on yourself, it is good to  regularly mail yourself some statistics. I think the easiest way to automate this is using [sendEmail](http://www.debianadmin.com/how-to-sendemail-from-the-command-line-using-a-gmail-account-and-others.html), which can do neat stuff like send through your Gmail account.
 
 For example, put something like this in your weekly [cron](http://clickmojo.com/code/cron-tutorial.html) jobs:
-`/(PATH_TO_FILE)/selfstats.py --back 1 w --ratios 900 --periods 900 | sendEmail -q -u "Weekly selfstats" <etc..>`
+`/(PATH_TO_FILE)/selfstats.py --back 1 w --ratios 900 --periods 900 | /usr/bin/sendEmail -q -u "Weekly selfstats" <etc..>`
 This will give you some interesting feedback on how much and when you have been active this last week and how much you have written vs moused, etc.

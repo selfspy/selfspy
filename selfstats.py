@@ -392,11 +392,11 @@ class Selfstats:
             print
         
         if self.args['periods']:
-            print 'Active periods (intervals are in HH:MM:SS):'
+            print 'Active periods:'
             for t1,t2 in self.summary['activity'].times:
                 d1 = datetime.datetime.fromtimestamp(t1)
                 d2 = datetime.datetime.fromtimestamp(t2)
-                print '%s, %s' % (d1.isoformat(' '), str(d2 - d1).split('.')[0])
+                print '%s - %s' % (d1.isoformat(' '), str(d2.time()).split('.')[0])
             print
 
         if self.args['ratios']:
@@ -408,7 +408,7 @@ class Selfstats:
             keys = tryget('keystrokes')
             print 'Keys / Clicks: %.1f' % (keys / clicks)
             print 'Active seconds / Keys: %.1f' % (act / keys)
-
+            print
             print 'Mouse movements / Keys: %.1f' % (mousings / keys)
             print 'Mouse movements / Clicks: %.1f' % (mousings / clicks)
             print

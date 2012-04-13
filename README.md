@@ -7,7 +7,7 @@ See Example Statistics, below, for some of the fabulous things you can do with t
 
 ### Installing Selfspy
 
-Either clone the repository from Github, or click on the Download link on http://gurgeh.github.com/selfspy/ to get the Python source.
+Either clone the repository from Github (git clone git://github.com/gurgeh/selfspy), or click on the Download link on http://gurgeh.github.com/selfspy/ to get the Python source.
 
 Selfspy has a few dependencies on other Python libraries that need to be satisfied. These are documented in the requirements.txt file. If you have *pip* installed, installing the dependencies is a simple matter of running `pip install -r requirements.txt`.
 

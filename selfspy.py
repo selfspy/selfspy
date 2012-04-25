@@ -23,9 +23,6 @@ import check_password
 """
 
 Todo:
-  tag release in github
-
---
   test keymap switch
 
 ---Later

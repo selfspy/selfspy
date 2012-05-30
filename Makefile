@@ -1,3 +1,6 @@
+build:
+	echo "Nothing to build. Only install."
+
 install:
 	pip install -r requirements.txt
 	mkdir -p /var/lib/selfspy

@@ -7,10 +7,11 @@ See Example Statistics, below, for some of the fabulous things you can do with t
 
 ### Installing Selfspy
 
+I have a PPA for Ubuntu here:
+https://launchpad.net/~gurgeh/+archive/selfspy
+
 If you run ArchLinux, here is an AUR package:
 https://aur.archlinux.org/packages.php?ID=58501
-
-I will have a PPA for Ubuntu up in the coming days (first part of June 2012).
 
 To install manually, either clone the repository from Github (git clone git://github.com/gurgeh/selfspy), or click on the Download link on http://gurgeh.github.com/selfspy/ to get the latest Python source.
 

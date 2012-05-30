@@ -1,8 +1,7 @@
 build:
-	echo "Nothing to build. Only install. Destination is" $(DESTDIR)
+	echo "Nothing to build. Only install. Destination is: " $(DESTDIR)
 
 install:
-	pip install -r requirements.txt
 	mkdir -p $(DESTDIR)/var/lib/selfspy
 	cp *.py $(DESTDIR)/var/lib/selfspy
 	mkdir -p ~/.selfspy

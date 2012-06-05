@@ -131,14 +131,14 @@ class Keys(SpookMixin, Base):
     keys = Column(Binary)
     timings = Column(Binary)
 
-    def __init__(self, text, keys, timings, started, process_id, window_id, geometry_id):
+    def __init__(self, text, keys, timings, nrkeys, started, process_id, window_id, geometry_id):
         ztimings = zlib.compress(json.dumps(timings))
         zkeys = maybe_encrypt(zlib.compress(json.dumps(keys)))
         ztext = maybe_encrypt(text)
 
         self.text = ztext
         self.keys = zkeys
-        self.nrkeys = len(keys)
+        self.nrkeys = nrkeys
         self.timings = ztimings
         self.started = started
 

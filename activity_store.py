@@ -13,6 +13,12 @@ SKIP_SET = {'Shift_L', 'Shift_R'}
 
 #Mouse buttons: left button: 1, middle: 2, right: 3, scroll up: 4, down:5
 
+class KeyPress:
+    def __init__(self, key, time, is_repeat):
+        self.key = key
+        self.time = time
+        self.is_repeat = is_repeat
+
 class ActivityStore:
     def __init__(self, db_name, encrypter=None, store_text=True):
         self.session_maker = models.initialize(db_name)
@@ -29,8 +35,7 @@ class ActivityStore:
         self.specials_in_row = 0
 
         self.curtext = u""
-        self.keys = []
-        self.timings = []
+        self.key_presses = []
         self.last_key_time = time.time()
         
         self.started = NOW()
@@ -88,20 +93,25 @@ class ActivityStore:
         self.nrmoves = 0
 
     def store_keys(self):
-        if self.timings:
+        if self.key_presses:
             self.maybe_end_specials()
             
+            keys = [press.key for press in self.key_presses]
+            timings = [press.time for press in self.key_presses]
+
+            nrkeys = reduce(lambda count, press: count + (not press.is_repeat and 1 or 0), self.key_presses, 0)
+
             if not self.store_text:
-                self.keys = []
+                keys = []
                 self.curtext = u""
             
-            self.session.add(Keys(self.curtext.encode('utf8'), self.keys, self.timings, self.started, self.cur_win_proc, self.cur_win_id, self.cur_geo_id))
+            self.session.add(Keys(self.curtext.encode('utf8'), keys, timings, nrkeys, self.started, self.cur_win_proc, self.cur_win_id, self.cur_geo_id))
+
             self.trycommit()
 
             self.started = NOW()
             self.curtext = u""
-            self.timings = []
-            self.keys = []
+            self.key_presses = []
             self.last_key_time = time.time()
 
     def get_cur_window(self):
@@ -173,7 +183,7 @@ class ActivityStore:
 
         self.check_geometry()
 
-    def got_key(self, keycode, state, s, press):
+    def got_key(self, keycode, state, s, press, repeat):
         now = time.time()
         self.log_cur_window()
         if press:
@@ -190,8 +200,7 @@ class ActivityStore:
                         self.specials_in_row += 1
                     self.lastspecial = s
             if self.specials_in_row < 2:
-                self.keys.append(s)
-                self.timings.append(now - self.last_key_time)
+                self.key_presses.append(KeyPress(s, now - self.last_key_time, repeat))
                 self.last_key_time = now
 
     def got_mouse_click(self, button, press):

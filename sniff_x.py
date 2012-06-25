@@ -101,7 +101,7 @@ class SniffX:
             return self.lookup_keysym(cn)
 
     def key_event(self, event):
-        return event.detail, event.state, self.get_key_name(event.detail, event.state), event.type == X.KeyPress
+        return event.detail, event.state, self.get_key_name(event.detail, event.state), event.type == X.KeyPress, event.sequence_number == 1
     
     def button_event(self, event):
         return event.detail, event.type == X.ButtonPress

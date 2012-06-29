@@ -2,10 +2,15 @@ import time
 from datetime import datetime
 NOW = datetime.now
 
-import Xlib.error
 import sqlalchemy
 
-import sniff_x
+import platform
+if platform.system() == 'Darwin':
+    import sniff_cocoa
+else:
+    import Xlib.error
+    import sniff_x
+
 import models
 from models import Process, Window, Geometry, Click, Keys
 
@@ -55,7 +60,10 @@ class ActivityStore:
                 time.sleep(1)
 
     def run(self):
-        self.sniffer = sniff_x.SniffX()
+        if platform.system() == 'Darwin':
+            self.sniffer = sniff_cocoa.SniffCocoa()
+        else:
+            self.sniffer = sniff_x.SniffX()
         self.log_cur_window()
         self.sniffer.key_hook = self.got_key
         self.sniffer.mouse_button_hook = self.got_mouse_click
@@ -117,7 +125,7 @@ class ActivityStore:
     def get_cur_window(self):
         i = 0
         while True:
-            try:
+        #    try:
                 cur_window = self.sniffer.the_display.get_input_focus().focus
                 cur_class = None
                 cur_name = None
@@ -130,25 +138,25 @@ class ActivityStore:
                     if cur_class is None:
                         cur_window = cur_window.query_tree().parent
 
-            except Xlib.error.XError:
-                i += 1
-                if i >= 10:
-                    return None, None, None
-                continue
-            break
+            #except Xlib.error.Xerror as e:
+            #    i += 1
+            #    if i >= 10:
+            #        return None, None, None
+            #    continue
+                break
         return cur_class[1], cur_window, cur_name
         
 
     def check_geometry(self):
         i = 0
         while True:
-            try:
+            #try:
                 geo = self.cur_window.get_geometry()
                 break
-            except Xlib.error.XError:
-                i += 1
-                if i >= 10:
-                    return
+            #except Xlib.error.XError:
+            #    i += 1
+            #    if i >= 10:
+            #        return
             
         cur_geo = self.session.query(Geometry).filter_by(xpos=geo.x, ypos=geo.y, width=geo.width, height=geo.height).scalar()
         if cur_geo is None:

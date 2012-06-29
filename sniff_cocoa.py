@@ -1,11 +1,11 @@
-from Cocoa import (NSApp,
-                   NSEvent,
+from Foundation import NSObject, NSLog
+from AppKit import NSApplication, NSApp
+from Cocoa import (NSEvent,
                    NSKeyDown, NSKeyDownMask, 
                    NSLeftMouseUp, NSLeftMouseDown, NSLeftMouseUpMask, NSLeftMouseDownMask,
                    NSRightMouseUp, NSRightMouseDown, NSRightMouseUpMask, NSRightMouseDownMask,
                    NSMouseMoved, NSMouseMovedMask,
                    NSScrollWheel, NSScrollWheelMask)
-from Foundation import NSObject, NSApplication, NSLog
 from PyObjCTools import AppHelper
 
 class Display:
@@ -14,9 +14,23 @@ class Display:
 
     class Focus:
         def __init__(self):
-            self.focus = None
+            self.focus = self
+            self.geo = self.Geometry() 
+        def get_wm_name(self):
+            return "unknown"
+        def get_wm_class(self):
+            return "unknown", "unknown", "unknown"
+        class Geometry:
+            def __init__(self):
+                self.x = 1680
+                self.y = 1050
+                self.width = 1680
+                self.height = 1050
 
-    def get_input_focus():
+        def get_geometry(self):
+            return self.geo
+
+    def get_input_focus(self):
         return self.focus
 
 class SniffCocoa:
@@ -41,7 +55,7 @@ class SniffCocoa:
         return AppDelegate
 
     def run(self):
-        app = NSApplication.sharedApplication()
+        NSApplication.sharedApplication()
         delegate = self.createAppDelegate().alloc().init()
         NSApp().setDelegate_(delegate)
         AppHelper.runEventLoop()
@@ -50,20 +64,23 @@ class SniffCocoa:
         AppHelper.stopEventLoop()
     
     def handler(self, event):
-        NSLog(u"%@", event)
-        """
-        if event.type == NSLeftMouseDown:
-           self.mouse_button_hook(1, True)
-        elif event.type == NsLeftMouseUp:
-           self.mouse_button_hook(1, False)
-        elif event.type == NSRightMouseDown:
-           self.mouse_button_hook(2, True)
-        elif event.type == NSRightMouseUp:
-           self.mouse_button_hook(2, False)
-        elif event.type == NSKeyDown:
-           self.key_hook(event.keyCode, None, event.characters, True, event.isARepeat)
-        elif event.type == NSMouseMoved:
-            loc = NSEvent.mouseLocation
-            self.mouse_move_hook(loc.x, loc.y)
-        """
+        try:
+            if event.type() == NSLeftMouseDown:
+                self.mouse_button_hook(1, True)
+ #           elif event.type() == NSLeftMouseUp:
+  #              self.mouse_button_hook(1, False)
+            elif event.type() == NSRightMouseDown:
+                self.mouse_button_hook(2, True)
+   #         elif event.type() == NSRightMouseUp:
+    #            self.mouse_button_hook(2, False)
+            elif event.type() == NSKeyDown:
+                self.key_hook(event.keyCode(), None, event.characters(), True, event.isARepeat())
+            elif event.type() == NSMouseMoved:
+                loc = NSEvent.mouseLocation()
+                self.mouse_move_hook(loc.x, loc.y)
+        except KeyboardInterrupt:
+            AppHelper.stopEventLoop()
 
+if __name__ == '__main__':
+    sc = SniffCocoa()
+    sc.run()

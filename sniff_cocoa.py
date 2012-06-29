@@ -1,6 +1,6 @@
 from Cocoa import (NSApp,
                    NSEvent,
-                   NSKeyDownMask, 
+                   NSKeyDown, NSKeyDownMask, 
                    NSLeftMouseUp, NSLeftMouseDown, NSLeftMouseUpMask, NSLeftMouseDownMask,
                    NSRightMouseUp, NSRightMouseDown, NSRightMouseUpMask, NSRightMouseDownMask,
                    NSMouseMoved, NSMouseMovedMask,
@@ -8,12 +8,23 @@ from Cocoa import (NSApp,
 from Foundation import NSObject, NSApplication, NSLog
 from PyObjCTools import AppHelper
 
+class Display:
+    def __init__(self):
+        self.focus = self.Focus()
+
+    class Focus:
+        def __init__(self):
+            self.focus = None
+
+    def get_input_focus():
+        return self.focus
 
 class SniffCocoa:
     def __init__(self):
         self.key_hook = lambda x: True
         self.mouse_button_hook = lambda x: True
         self.mouse_move_hook = lambda x: True
+        self.the_display = Display()
 
     def createAppDelegate (self) :
         sc = self

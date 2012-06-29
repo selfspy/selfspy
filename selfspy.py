@@ -112,10 +112,11 @@ if __name__ == '__main__':
         print 'Password failed'
         sys.exit(1)
 
-    with context:    
-        astore = ActivityStore(os.path.join(args['data_dir'], DBNAME), encrypter, store_text=(not args['no_text']))
+#    with context:    
+    astore = ActivityStore(os.path.join(args['data_dir'], DBNAME), 
+                           encrypter, store_text=(not args['no_text']))
                         
-        try:
-            astore.run()
-        except SystemExit:
-            astore.close()
+    try:
+        astore.run()
+    except SystemExit:
+        astore.close()

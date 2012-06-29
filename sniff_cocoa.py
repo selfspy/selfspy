@@ -56,17 +56,3 @@ class SniffCocoa:
             self.mouse_move_hook(loc.x, loc.y)
         """
 
-    def key_event(self, event):
-        return event.detail, event.state, self.get_key_name(event.detail, event.state), event.type == X.KeyPress, event.sequence_number == 1
-    
-    def button_event(self, event):
-        return event.detail, True
-
-    def lookup_keysym(self, keysym):
-        if keysym in self.keysymdict:
-            return self.keysymdict[keysym]
-        return "[%d]" % keysym
-
-    
-
-

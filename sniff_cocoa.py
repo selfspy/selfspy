@@ -16,10 +16,12 @@ class Display:
         def __init__(self):
             self.focus = self
             self.geo = self.Geometry() 
+            self.wm_name = 'unknown'
+            self.app_name = 'unknown'
         def get_wm_name(self):
-            return "unknown"
+            return wm_name
         def get_wm_class(self):
-            return "unknown", "unknown", "unknown"
+            return "unknown", self.app_name, self.wm_name
         class Geometry:
             def __init__(self):
                 self.x = 1680
@@ -78,6 +80,15 @@ class SniffCocoa:
             elif event.type() == NSMouseMoved:
                 loc = NSEvent.mouseLocation()
                 self.mouse_move_hook(loc.x, loc.y)
+            if event.type() in [NSLeftMouseDown, NSRightMouseDown, NSMouseMoved]:
+                windowNumber = event.windowNumber()
+                windowList = CGWindowListCopyWindowInfo(kCGWindowListOptionOnScreenOnly, 
+                                                        kCGNullWindowID)
+                for window in windowList:
+                    if window['kCGWindowNumber'] == windowNumber:
+                        self.focus.wm_name = window['kCGWindowName']
+                        self.fucus.app_name = window['kCGWindowOwnerName']
+                        break
         except KeyboardInterrupt:
             AppHelper.stopEventLoop()
 

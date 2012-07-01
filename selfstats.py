@@ -74,7 +74,7 @@ def make_time_string(dates, clock):
     if dates is None: dates = []
 
     if len(dates) > 3:
-        print 'Max three arguments to date', dates
+        print('Max three arguments to date', dates)
         sys.exit(1)
 
     try:
@@ -95,14 +95,14 @@ def make_time_string(dates, clock):
                 else:
                     now = now.replace(year=now.year - 1, month=12)
     except ValueError:
-        print 'Malformed date', dates
+        print('Malformed date', dates)
         sys.exit(1)
 
     if clock:
         try:
             hour, minute = [int(v) for v in clock.split(':')]
         except ValueError:
-            print 'Malformed clock', clock
+            print('Malformed clock', clock)
             sys.exit(1)
         
         now = now.replace(hour=hour, minute=minute, second=0)
@@ -114,7 +114,7 @@ def make_time_string(dates, clock):
 
 def make_period(q, period, who, start, prop):
     if len(period) < 1 or len(period) > 2:
-        print '%s needs one or two arguments, not %d.' % (who, len(period)), period
+        print('%s needs one or two arguments, not %d.' % (who, len(period)), period)
         sys.exit(1)
 
     d = {}
@@ -123,7 +123,7 @@ def make_period(q, period, who, start, prop):
         d['hours'] = val
     else:
         if period[1] not in PERIOD_LOOKUP:
-            print '--limit unit "%s" not one of %s' % (period[1], PERIOD_LOOKUP.keys())
+            print('--limit unit "%s" not one of %s' % (period[1], PERIOD_LOOKUP.keys()))
             sys.exit(1)
         d[PERIOD_LOOKUP[period[1]]] = val
     
@@ -171,7 +171,7 @@ class Selfstats:
         cutoff = [self.args[k] for k in ACTIVITY_ACTIONS if self.args[k]]
         if cutoff:
             if any(c != cutoff[0] for c in cutoff):
-                print 'You must give the same time argument to the different parameters in the --active family, when you use several in the same query.'
+                print('You must give the same time argument to the different parameters in the --active family, when you use several in the same query.')
                 sys.exit(1)
             self.need_activity = cutoff[0]
             self.need_timings = True
@@ -185,14 +185,14 @@ class Selfstats:
             try:
                 reg = re.compile(self.args[name], re.I)
             except re.error, e:
-                print 'Error in regular expression', str(e)
+                print('Error in regular expression', str(e))
                 sys.exit(1)
 
             for x in self.session.query(table).all():
                 if reg.search(x.__getattribute__(source_prop)):
                     ids.append(x.id)
             if not self.inmouse:
-                print '%d %s matched' % (len(ids), names)
+                print('%d %s matched' % (len(ids), names))
             if ids:
                 q = q.filter(target_prop.in_(ids))
             else:
@@ -237,7 +237,7 @@ class Selfstats:
             try:
                 bodrex = re.compile(self.args['body'], re.I)
             except re.error, e:
-                print 'Error in regular expression', str(e)
+                print('Error in regular expression', str(e))
                 sys.exit(1)
             for x in q.all():
                 body = x.decrypt_text()
@@ -258,19 +258,19 @@ class Selfstats:
     def show_rows(self):
         fkeys = self.filter_keys()
         rows = 0
-        print '<RowID> <Starting date and time> <Duration> <Process> <Window title> <Number of keys pressed>',
+        print('<RowID> <Starting date and time> <Duration> <Process> <Window title> <Number of keys pressed>',)
         if self.args['showtext']:
-            print '<Decrypted text>'
+            print('<Decrypted text>')
         else:
-            print
+            print()
 
         for row in fkeys:
             rows += 1
-            print row.id, row.started, pretty_seconds((row.created_at - row.started).total_seconds()), row.process.name, '"%s"'%row.window.title, row.nrkeys,
+            print(row.id, row.started, pretty_seconds((row.created_at - row.started).total_seconds()), row.process.name, '"%s"'%row.window.title, row.nrkeys,)
             if self.args['showtext']:
-                print row.decrypt_text()
+                print(row.decrypt_text())
             else:
-                print
+                print()
         print rows, 'rows'
 
     def calc_summary(self):
@@ -330,74 +330,74 @@ class Selfstats:
 
 
     def show_summary(self):
-        print '%d keystrokes in %d key sequences,' % (self.summary.get('keystrokes', 0), self.summary.get('nr', 0)),
-        print '%d clicks (%d excluding scroll),' % (self.summary.get('clicks', 0), self.summary.get('noscroll_clicks', 0)),
-        print '%d mouse movements' % (self.summary.get('mousings', 0))
-        print
+        print('%d keystrokes in %d key sequences,' % (self.summary.get('keystrokes', 0), self.summary.get('nr', 0)),)
+        print('%d clicks (%d excluding scroll),' % (self.summary.get('clicks', 0), self.summary.get('noscroll_clicks', 0)),)
+        print('%d mouse movements' % (self.summary.get('mousings', 0)))
+        print()
 
         if self.need_activity:
             act = self.summary.get('activity')
             if act: act = act.calc_total()
             else: act = 0
-            print 'Total time active:', 
-            print pretty_seconds(act)
-            print
+            print('Total time active:',)
+            print(pretty_seconds(act))
+            print()
 
         if self.args['clicks']:
-            print 'Mouse clicks:'
+            print('Mouse clicks:')
             for key,name in BUTTON_MAP:
-                print self.summary.get(key, 0), name
-            print
+                print(self.summary.get(key, 0), name)
+            print()
 
         if self.args['key_freqs']:
-            print 'Key frequencies:'
+            print('Key frequencies:')
             for key,val in self.summary['key_freqs'].most_common():
-                print key, val
-            print
+                print(key, val)
+            print()
 
         if self.args['pkeys']:
-            print 'Processes sorted by keystrokes:'
+            print('Processes sorted by keystrokes:')
             pdata = self.processes.items()
             pdata.sort(key=lambda x:x[1]['keystrokes'], reverse=True)
             for name, data in pdata:
-                print name, data['keystrokes']
-            print
+                print(name, data['keystrokes'])
+            print()
 
         if self.args['tkeys']:
-            print 'Window titles sorted by keystrokes:'
+            print('Window titles sorted by keystrokes:')
             wdata = self.windows.items()
             wdata.sort(key=lambda x:x[1]['keystrokes'], reverse=True)
             for name, data in wdata:
-                print name, data['keystrokes']
-            print
+                print(name, data['keystrokes'])
+            print()
 
         if self.args['pactive']:
-            print 'Processes sorted by activity:'
+            print('Processes sorted by activity:')
             for p in self.processes.values():
                 p['active_time'] = int(p['activity'].calc_total())
             pdata = self.processes.items()
             pdata.sort(key=lambda x:x[1]['active_time'], reverse=True)
             for name, data in pdata:
-                print '%s, %s' % (name, pretty_seconds(data['active_time']))
-            print
+                print('%s, %s' % (name, pretty_seconds(data['active_time'])))
+            print()
 
         if self.args['tactive']:
-            print 'Window titles sorted by activity:'
+            print('Window titles sorted by activity:')
             for w in self.windows.values():
                 w['active_time'] = int(w['activity'].calc_total())
             wdata = self.windows.items()
             wdata.sort(key=lambda x:x[1]['active_time'], reverse=True)
             for name, data in wdata:
-                print '%s, %s' % (name, pretty_seconds(data['active_time']))
-            print
+                print('%s, %s' % (name, pretty_seconds(data['active_time'])))
+            print()
         
         if self.args['periods']:
-            print 'Active periods:'
+            print('Active periods:')
             for t1,t2 in self.summary['activity'].times:
                 d1 = datetime.datetime.fromtimestamp(t1)
                 d2 = datetime.datetime.fromtimestamp(t2)
-                print '%s - %s' % (d1.isoformat(' '), str(d2.time()).split('.')[0])
-            print
+                print('%s - %s' % (d1.isoformat(' '), str(d2.time()).split('.')[0]))
+            print()
 
         if self.args['ratios']:
             def tryget(prop):
@@ -406,12 +406,12 @@ class Selfstats:
             mousings = tryget('mousings')
             clicks = tryget('clicks')
             keys = tryget('keystrokes')
-            print 'Keys / Clicks: %.1f' % (keys / clicks)
-            print 'Active seconds / Keys: %.1f' % (act / keys)
-            print
-            print 'Mouse movements / Keys: %.1f' % (mousings / keys)
-            print 'Mouse movements / Clicks: %.1f' % (mousings / clicks)
-            print
+            print('Keys / Clicks: %.1f' % (keys / clicks))
+            print('Active seconds / Keys: %.1f' % (act / keys))
+            print()
+            print('Mouse movements / Keys: %.1f' % (mousings / keys))
+            print('Mouse movements / Clicks: %.1f' % (mousings / clicks))
+            print()
             
 
 def parse_config():
@@ -479,7 +479,7 @@ if __name__ == '__main__':
         try:
             int(args['limit'][0])
         except ValueError:
-            print 'First argument to --limit must be an integer'
+            print('First argument to --limit must be an integer')
             sys.exit(1)
         
 
@@ -493,7 +493,7 @@ if __name__ == '__main__':
             models.ENCRYPTER = Blowfish.new(hashlib.md5(args['password']).digest())
 
         if not check_password.check(args['data_dir'], models.ENCRYPTER, read_only=True):
-            print 'Password failed'
+            print('Password failed')
             sys.exit(1)
 
     ss.do()

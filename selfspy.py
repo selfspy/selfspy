@@ -85,9 +85,9 @@ if __name__ == '__main__':
     lockname = os.path.join(args['data_dir'], LOCK_FILE)
     lock = lockfile.FileLock(lockname)
     if lock.is_locked():
-        print '%s is locked! I am probably already running.' % lockname
-        print 'If you can find no selfspy process running, it is a stale lock and you can safely remove it.'
-        print 'Shutting down.'
+        print('%s is locked! I am probably already running.' % lockname)
+        print('If you can find no selfspy process running, it is a stale lock and you can safely remove it.')
+        print('Shutting down.')
         sys.exit(1)
 
     context = daemon.DaemonContext(
@@ -111,25 +111,25 @@ if __name__ == '__main__':
     encrypter = make_encrypter(args['password'])
 
     if not check_password.check(args['data_dir'], encrypter):
-        print 'Password failed'
+        print('Password failed')
         sys.exit(1)
 
     if args['change_password']:
         new_password = get_password(message="New Password: ")
         new_encrypter = make_encrypter(new_password)
-        print 'Re-encrypting your keys...'
+        print('Re-encrypting your keys...')
         astore = ActivityStore(os.path.join(args['data_dir'], DBNAME), encrypter, store_text=(not args['no_text']))
         astore.change_password(new_encrypter)
         # delete the old password.digest
         os.remove(os.path.join(args['data_dir'], check_password.DIGEST_NAME))
         check_password.check(args['data_dir'], new_encrypter)
         # don't assume we want the logger to run afterwards
-        print 'Exiting...'
+        print('Exiting...')
         sys.exit(0)
 
     with context:
         astore = ActivityStore(os.path.join(args['data_dir'], DBNAME), encrypter, store_text=(not args['no_text']))
-                        
+
         try:
             astore.run()
         except SystemExit:

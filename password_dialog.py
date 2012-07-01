@@ -13,7 +13,6 @@ def get_password(verify=None):
     else:
         pw = get_tk_password(verify)
     return pw
-        
 
 
 def get_tk_password(verify):

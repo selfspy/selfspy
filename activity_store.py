@@ -214,6 +214,3 @@ class ActivityStore:
         self.latestx = x
         self.latesty = y
 
-
-
-

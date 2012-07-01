@@ -102,14 +102,19 @@ def pad(s, padnum):
         return s
     return s + '\0' * (padnum - (ls % padnum))
 
-def maybe_encrypt(s):
-    if ENCRYPTER:
+def maybe_encrypt(s, other_encrypter=None):
+    if other_encrypter is not None:
+        s = pad(s, 8)
+        s = other_encrypter.encrypt(s)
+    elif ENCRYPTER:
         s = pad(s, 8)
         s = ENCRYPTER.encrypt(s)
     return s
 
-def maybe_decrypt(s):
-    if ENCRYPTER:
+def maybe_decrypt(s, other_encrypter=None):
+    if other_encrypter is not None:
+        s = other_encrypter.decrypt(s)
+    elif ENCRYPTER:
         s = ENCRYPTER.decrypt(s)
     return s
 
@@ -133,11 +138,10 @@ class Keys(SpookMixin, Base):
 
     def __init__(self, text, keys, timings, nrkeys, started, process_id, window_id, geometry_id):
         ztimings = zlib.compress(json.dumps(timings))
-        zkeys = maybe_encrypt(zlib.compress(json.dumps(keys)))
-        ztext = maybe_encrypt(text)
 
-        self.text = ztext
-        self.keys = zkeys
+        self.encrypt_text(text)
+        self.encrypt_keys(keys)
+
         self.nrkeys = nrkeys
         self.timings = ztimings
         self.started = started
@@ -145,6 +149,15 @@ class Keys(SpookMixin, Base):
         self.process_id = process_id
         self.window_id = window_id
         self.geometry_id = geometry_id
+
+    def encrypt_text(self, text, other_encrypter=None):
+        ztext = maybe_encrypt(text, other_encrypter=other_encrypter)
+        self.text = ztext
+
+    def encrypt_keys(self, keys, other_encrypter=None):
+        zkeys = maybe_encrypt(zlib.compress(json.dumps(keys)),
+                              other_encrypter=other_encrypter)
+        self.keys = zkeys
 
     def decrypt_text(self):
         return maybe_decrypt(self.text)
@@ -155,6 +168,3 @@ class Keys(SpookMixin, Base):
 
     def __repr__(self):
         return "<Keys %s>" % self.nrkeys
-
-
-

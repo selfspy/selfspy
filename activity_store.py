@@ -8,21 +8,22 @@ import platform
 if platform.system() == 'Darwin':
     import sniff_cocoa
 else:
-    import Xlib.error
     import sniff_x
 
 import models
 from models import Process, Window, Geometry, Click, Keys
 
-SKIP_SET = {'Shift_L', 'Shift_R'}
-
-#Mouse buttons: left button: 1, middle: 2, right: 3, scroll up: 4, down:5
+class Display:
+    def __init__(self):
+         self.proc_id = None
+         self.win_id = None 
+         self.geo_id = None
 
 class KeyPress:
     def __init__(self, key, time, is_repeat):
         self.key = key
         self.time = time
-        self.is_repeat = is_repeat
+        self.repeat = is_repeat
 
 class ActivityStore:
     def __init__(self, db_name, encrypter=None, store_text=True):
@@ -32,24 +33,15 @@ class ActivityStore:
         models.ENCRYPTER = encrypter
 
         self.store_text = store_text
-
-        self.nrmoves = 0
-        self.latestx = 0
-        self.latesty = 0
-        self.lastspecial = None
-        self.specials_in_row = 0
-
         self.curtext = u""
+
         self.key_presses = []
-        self.last_key_time = time.time()
-        
+        self.mouse_path = []
+
+        self.current_window = Display()
+
+        self.last_key_time = time.time()        
         self.started = NOW()
-        self.cur_class = None
-        self.cur_window = None
-        self.cur_name = None
-        self.cur_process_id = None
-        self.cur_win_id = None
-        self.cur_win_proc = None
 
     def trycommit(self):
         for _ in xrange(1000):
@@ -64,164 +56,126 @@ class ActivityStore:
             self.sniffer = sniff_cocoa.SniffCocoa()
         else:
             self.sniffer = sniff_x.SniffX()
-        self.log_cur_window()
+        self.sniffer.screen_hook = self.got_screen_change
         self.sniffer.key_hook = self.got_key
         self.sniffer.mouse_button_hook = self.got_mouse_click
         self.sniffer.mouse_move_hook = self.got_mouse_move
 
         self.sniffer.run()
 
-    def close(self):
-        self.sniffer.cancel()
-        self.store_keys()
+    def got_screen_change(self, process_name, window_name, win_x, win_y, win_width, win_height):
+        """ Recieves a screen change and stores any changes. If the process or window has
+            changed it will also store any queued pressed keys.
+            process_name is the name of the process running the current window
+            window_name is the name of the window 
+            win_x is the x position of the window
+            win_y is the y position of the window
+            win_width is the width of the window
+            win_height is the height of the window """
+        self.session = self.session_maker()
 
-    def store_window(self):
-        cur_window = self.session.query(Window).filter_by(title=self.cur_name.decode('latin1'), process_id=self.cur_process_id).scalar()
+        cur_process = self.session.query(Process).filter_by(name=process_name).scalar()
+        if cur_process is None:
+            cur_process = Process(process_name)
+            self.session.add(cur_process)
+            
+        cur_geometry = self.session.query(Geometry).filter_by(xpos=win_x, 
+                                                              ypos=win_y, 
+                                                              width=win_width, 
+                                                              height=win_height).scalar()
+        if cur_geometry is None:
+            cur_geometry = Geometry(win_x, win_y, win_width, win_height)
+            self.session.add(cur_geo)
+        
+        cur_window = self.session.query(Geometry).filter_by(title=window_name,
+                                                            process_id=cur_process.id).scalar()
         if cur_window is None:
-            cur_window = Window(self.cur_name.decode('latin1'), self.cur_process_id)
+            cur_window = Window(window_name, cur_process.id)
             self.session.add(cur_window)
-            self.trycommit()
 
-        self.cur_win_id = cur_window.id
-        self.cur_process_id = cur_window.process_id
-        self.cur_win_proc = cur_window.process_id
-
-    def maybe_end_specials(self):
-        if self.specials_in_row == 1:
-            self.curtext += '>'
-        elif self.specials_in_row > 1:
-            self.curtext += 'x%d>' % self.specials_in_row
-        self.specials_in_row = 0
-        self.lastspecial = None
-
-    def store_click(self, button, press):
-        if press:
-            self.session.add(Click(button, press, self.latestx, self.latesty, self.nrmoves, self.cur_win_proc, self.cur_win_id, self.cur_geo_id))
         self.trycommit()
-        self.nrmoves = 0
+
+        if (self.current_window.proc_id != cur_process.id or
+            self.current_window.win_id != cur_window.id)
+            self.store_keys() # happens before as these keypresses belong to the previous window
+            self.current_window.proc_id = cur_process.id
+            self.current_window.win_id = cur_window.id
+            self.current_window.geo_id = cur_geometry.id
+
 
     def store_keys(self):
+        """ Stores the current queued key-presses """
         if self.key_presses:
-            self.maybe_end_specials()
-            
             keys = [press.key for press in self.key_presses]
             timings = [press.time for press in self.key_presses]
-
-            nrkeys = reduce(lambda count, press: count + (not press.is_repeat and 1 or 0), self.key_presses, 0)
-
+            add = lambda count, press: count + (not press.is_repeat and 1 or 0)
+            nrkeys = reduce(add, self.key_presses, 0)
+            
+            curtext = u""
             if not self.store_text:
                 keys = []
-                self.curtext = u""
-            
-            self.session.add(Keys(self.curtext.encode('utf8'), keys, timings, nrkeys, self.started, self.cur_win_proc, self.cur_win_id, self.cur_geo_id))
+            else:
+                for key in keys:
+                    curtext += keys
+
+            self.session.add(Keys(curtext.encode('utf8'), 
+                                  keys,
+                                  timings,
+                                  nrkeys,
+                                  self.started,
+                                  self.current_window.proc_id,
+                                  self.current_window.win_id,
+                                  self.current_window.geo_id))
 
             self.trycommit()
 
             self.started = NOW()
-            self.curtext = u""
             self.key_presses = []
             self.last_key_time = time.time()
-
-    def get_cur_window(self):
-        i = 0
-        while True:
-        #    try:
-                cur_window = self.sniffer.the_display.get_input_focus().focus
-                cur_class = None
-                cur_name = None
-                while cur_class is None and cur_class is None:
-                    if type(cur_window) is int:
-                        return None, None, None
-            
-                    cur_name = cur_window.get_wm_name()
-                    cur_class = cur_window.get_wm_class()
-                    if cur_class is None:
-                        cur_window = cur_window.query_tree().parent
-
-            #except Xlib.error.Xerror as e:
-            #    i += 1
-            #    if i >= 10:
-            #        return None, None, None
-            #    continue
-                break
-        return cur_class[1], cur_window, cur_name
-        
-
-    def check_geometry(self):
-        i = 0
-        while True:
-            #try:
-                geo = self.cur_window.get_geometry()
-                break
-            #except Xlib.error.XError:
-            #    i += 1
-            #    if i >= 10:
-            #        return
-            
-        cur_geo = self.session.query(Geometry).filter_by(xpos=geo.x, ypos=geo.y, width=geo.width, height=geo.height).scalar()
-        if cur_geo is None:
-            cur_geo = Geometry(geo)
-            self.session.add(cur_geo)
-            self.trycommit()
-        self.cur_geo_id = cur_geo.id
-
-    def log_cur_window(self):
-        cur_class, cur_window, cur_name = self.get_cur_window()
-        if cur_class is None: return
-
-        self.session = self.session_maker()
-
-        if cur_class != self.cur_class:
-            self.cur_class = cur_class
-            proc_name = self.cur_class.decode('latin1')
-            cur_process = self.session.query(Process).filter_by(name=proc_name).scalar()
-            if cur_process is None:
-                cur_process = Process(proc_name)
-                self.session.add(cur_process)
-                self.trycommit()
-            
-            self.cur_process_id = cur_process.id
-            
-
-        if cur_window != self.cur_window or cur_name != self.cur_name:
-            self.cur_window = cur_window
-            self.cur_name = cur_name
-            self.store_keys()
-            self.store_window()
-
-        self.check_geometry()
-
-    def got_key(self, keycode, state, s, press, repeat):
+    
+    def got_key(self, keycode, state, string, repeat):
+        """ Recieves key-presses and queues them for storage.
+            keycode is the code sent by the keyboard to represent the pressed key
+            state is the list of modifier keys pressed, each modifier key should be represented
+                  with capital letters and optionally followed by an underscore and location
+                  specifier, i.e: SHIFT or SHIFT_L/SHIFT_R, ALT, CTRL
+            string is the string representation of the key press
+            repeat is True if the current key is a repeat sent by the keyboard """
         now = time.time()
-        self.log_cur_window()
-        if press:
-            if s not in SKIP_SET and not (s[0] == '[' and s[-1] == ']'):
-                if len(s) == 1:
-                    self.maybe_end_specials()
-                    self.curtext += s
-                else:
-                    if self.lastspecial != s:
-                        self.maybe_end_specials()
-                        self.curtext += '<[%s]' % s
-                        self.specials_in_row = 1
-                    else:
-                        self.specials_in_row += 1
-                    self.lastspecial = s
-            if self.specials_in_row < 2:
-                self.key_presses.append(KeyPress(s, now - self.last_key_time, repeat))
-                self.last_key_time = now
+        if string and (len(state) <= 1) and (not state[0] in ['SHIFT' ,'SHIFT_L', 'SHIFT_R']):
+            self.key_presses.append(KeyPress(string, now - last_key_time, is_repeat))
+            self.last_key_time = now
+        else:
+            s = string
+            for modifier in state:
+                s = '<['+modifier+'] ' + s +'>'
+            self.key_presses.append(KeyPress(s, now - last_key_time, is_repeat))
+            self.last_key_time = now
 
-    def got_mouse_click(self, button, press):
-        self.log_cur_window()
-        self.store_click(button, press)
-        if not (press or button in [4,5]):
-            self.store_keys()
+    def store_click(self, button, x, y):
+        """ Stores incoming mouse-clicks """
+        self.session.add(Click(button, 
+                               press, 
+                               x, y,
+                               self.current_window.proc_id,
+                               self.current_window.win_id, 
+                               self.current_window.geo_id))
+        self.trycommit()
+
+    def got_mouse_click(self, button, x, y, press):
+        """ Recieves mouse clicks and sends them for storage.
+            Mouse buttons: left: 1, middle: 2, right: 3, scroll up: 4, down:5 
+            x,y are the coordinates of the keypress
+            press is True if it pressed down, False if released"""
+        if press:
+            self.store_click(button, x, y, press)
 
     def got_mouse_move(self, x, y):
-        self.nrmoves += 1
-        self.latestx = x
-        self.latesty = y
-
-
-
-
+        """ Queues mouse movements.
+            x,y are the new coorinates on moving the mouse"""
+        self.mouse_path.append([x,y])
+        
+    def close(self):
+        """ stops the sniffer and stores the latest keys. To be used on shutdown of program"""
+        self.sniffer.cancel()
+        self.store_keys()

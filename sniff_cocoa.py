@@ -8,39 +8,13 @@ from Cocoa import (NSEvent,
                    NSScrollWheel, NSScrollWheelMask)
 from PyObjCTools import AppHelper
 
-class Display:
-    def __init__(self):
-        self.focus = self.Focus()
-
-    class Focus:
-        def __init__(self):
-            self.focus = self
-            self.geo = self.Geometry() 
-            self.wm_name = 'unknown'
-            self.app_name = 'unknown'
-        def get_wm_name(self):
-            return wm_name
-        def get_wm_class(self):
-            return "unknown", self.app_name, self.wm_name
-        class Geometry:
-            def __init__(self):
-                self.x = 1680
-                self.y = 1050
-                self.width = 1680
-                self.height = 1050
-
-        def get_geometry(self):
-            return self.geo
-
-    def get_input_focus(self):
-        return self.focus
-
 class SniffCocoa:
     def __init__(self):
         self.key_hook = lambda x: True
         self.mouse_button_hook = lambda x: True
         self.mouse_move_hook = lambda x: True
-        self.the_display = Display()
+        self.screen_hook = lambda x: True
+      
 
     def createAppDelegate (self) :
         sc = self
@@ -67,28 +41,42 @@ class SniffCocoa:
     
     def handler(self, event):
         try:
-            if event.type() == NSLeftMouseDown:
-                self.mouse_button_hook(1, True)
- #           elif event.type() == NSLeftMouseUp:
-  #              self.mouse_button_hook(1, False)
-            elif event.type() == NSRightMouseDown:
-                self.mouse_button_hook(2, True)
-   #         elif event.type() == NSRightMouseUp:
-    #            self.mouse_button_hook(2, False)
-            elif event.type() == NSKeyDown:
-                self.key_hook(event.keyCode(), None, event.characters(), True, event.isARepeat())
-            elif event.type() == NSMouseMoved:
-                loc = NSEvent.mouseLocation()
-                self.mouse_move_hook(loc.x, loc.y)
             if event.type() in [NSLeftMouseDown, NSRightMouseDown, NSMouseMoved]:
                 windowNumber = event.windowNumber()
                 windowList = CGWindowListCopyWindowInfo(kCGWindowListOptionOnScreenOnly, 
                                                         kCGNullWindowID)
                 for window in windowList:
                     if window['kCGWindowNumber'] == windowNumber:
-                        self.focus.wm_name = window['kCGWindowName']
-                        self.fucus.app_name = window['kCGWindowOwnerName']
+                        process_name = window['kCGWindowOwnerName']
+                        window_name = window['kCGWindowName']
+                        # BELOW IS NOT CORRECT, NEED TRANSFORM
+                        geometry = window['kCGWindowBounds'] 
+                        screen_hook(process_name, 
+                                    window_name, 
+                                    geometry.x, 
+                                    geometry.y, 
+                                    geometry.width, 
+                                    geometry.height)
                         break
+            if event.type() == NSLeftMouseDown:
+                loc = NSEvent.mouseLocation()
+                self.mouse_button_hook(1, loc.x, loc.y, True)
+#           elif event.type() == NSLeftMouseUp:
+#               self.mouse_button_hook(1, False)
+            elif event.type() == NSRightMouseDown:
+                loc = NSEvent.mouseLocation()
+                self.mouse_button_hook(3, loc.x, loc.y, True)
+#           elif event.type() == NSRightMouseUp:
+#               self.mouse_button_hook(2, False)
+            elif event.type() == NSKeyDown:
+                self.key_hook(event.keyCode(), 
+                              NSEvent.modifierFlags(), #This is not correct, need to transform
+                              event.characters(), 
+                              True, 
+                              event.isARepeat())
+            elif event.type() == NSMouseMoved:
+                loc = NSEvent.mouseLocation()
+                self.mouse_move_hook(loc.x, loc.y)
         except KeyboardInterrupt:
             AppHelper.stopEventLoop()
 

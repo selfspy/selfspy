@@ -57,11 +57,11 @@ class Geometry(SpookMixin, Base):
 
     Index('idx_geo', 'xpos', 'ypos', 'width', 'height')
 
-    def __init__(self, geo):
-        self.xpos = geo.x
-        self.ypos = geo.y
-        self.width = geo.width
-        self.height = geo.height
+    def __init__(self, x, y, width, height):
+        self.xpos = x
+        self.ypos = y
+        self.width = width
+        self.height = height
 
     def __repr__(self):
         return "<Geometry (%d, %d), (%d, %d)>" % (self.xpos, self.ypos, self.width, self.height)

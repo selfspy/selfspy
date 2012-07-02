@@ -23,7 +23,7 @@ class KeyPress:
     def __init__(self, key, time, is_repeat):
         self.key = key
         self.time = time
-        self.repeat = is_repeat
+        self.is_repeat = is_repeat
 
 class ActivityStore:
     def __init__(self, db_name, encrypter=None, store_text=True):

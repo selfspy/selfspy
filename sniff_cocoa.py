@@ -68,6 +68,7 @@ class SniffCocoa:
             elif event.type() == NSScrollWheel:
                 # Scroll behaves differently on OS X then in Xorg, need to think of something here
             elif event.type() == NSKeyDown:
+                # NEED TO FIX CHECK FOR DISLAY CHANGE!!
                 modifiers = [] # OS X api doesn't care it if is left or right
                 if (flags & NSControlKeyMask):
                     modifiers.append('CONTROL')

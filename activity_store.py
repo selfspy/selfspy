@@ -28,7 +28,6 @@ class KeyPress:
 class ActivityStore:
     def __init__(self, db_name, encrypter=None, store_text=True):
         self.session_maker = models.initialize(db_name)
-        self.session = None
 
         models.ENCRYPTER = encrypter
 
@@ -52,6 +51,8 @@ class ActivityStore:
                 time.sleep(1)
 
     def run(self):
+        self.session = session_maker()
+
         if platform.system() == 'Darwin':
             self.sniffer = sniff_cocoa.SniffCocoa()
         else:
@@ -72,8 +73,6 @@ class ActivityStore:
             win_y is the y position of the window
             win_width is the width of the window
             win_height is the height of the window """
-        self.session = self.session_maker()
-
         cur_process = self.session.query(Process).filter_by(name=process_name).scalar()
         if cur_process is None:
             cur_process = Process(process_name)
@@ -95,8 +94,8 @@ class ActivityStore:
 
         self.trycommit()
 
-        if (self.current_window.proc_id != cur_process.id or
-            self.current_window.win_id != cur_window.id)
+        if (self.current_window.proc_id != cur_process.id or 
+            self.current_window.win_id != cur_window.id):
             self.store_keys() # happens before as these keypresses belong to the previous window
             self.current_window.proc_id = cur_process.id
             self.current_window.win_id = cur_window.id

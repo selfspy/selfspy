@@ -142,7 +142,6 @@ class ActivityStore:
             repeat is True if the current key is a repeat sent by the keyboard """
         now = time.time()
         if string and (len(state) == 1) and (state[0] in ['SHIFT' ,'SHIFT_L', 'SHIFT_R']):
-            print 
             self.key_presses.append(KeyPress(string, now - self.last_key_time, is_repeat))
             self.last_key_time = now
         else:

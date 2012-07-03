@@ -1,12 +1,13 @@
 from Foundation import NSObject, NSLog
-from AppKit import NSApplication, NSApp
+from AppKit import NSApplication, NSApp, NSWorkspace
 from Cocoa import (NSEvent,
-                   NSKeyDown, NSKeyDownMask, 
+                   NSKeyDown, NSKeyDownMask, NSKeyUp, NSKeyUpMask
                    NSLeftMouseUp, NSLeftMouseDown, NSLeftMouseUpMask, NSLeftMouseDownMask,
                    NSRightMouseUp, NSRightMouseDown, NSRightMouseUpMask, NSRightMouseDownMask,
                    NSMouseMoved, NSMouseMovedMask,
                    NSScrollWheel, NSScrollWheelMask,
                    NSAlternateKeyMask, NSCommandKeyMask, NSControlKeyMask)
+from Quartz import CGWindowListCopyWindowInfo
 from PyObjCTools import AppHelper
 
 class SniffCocoa:
@@ -16,11 +17,14 @@ class SniffCocoa:
         self.mouse_move_hook = lambda x: True
         self.screen_hook = lambda x: True
 
+        self.currentApp = None
+
     def createAppDelegate (self) :
         sc = self
         class AppDelegate(NSObject):
             def applicationDidFinishLaunching_(self, notification):
                 mask = (NSKeyDownMask 
+                        | NSKeyUpMask
                         | NSLeftMouseDownMask 
                         | NSLeftMouseUpMask
                         | NSRightMouseDownMask 
@@ -34,6 +38,7 @@ class SniffCocoa:
         NSApplication.sharedApplication()
         delegate = self.createAppDelegate().alloc().init()
         NSApp().setDelegate_(delegate)
+        self.workspace = NSWorkspace.sharedWorkspace()
         AppHelper.runEventLoop()
 
     def cancel(self):
@@ -41,20 +46,27 @@ class SniffCocoa:
     
     def handler(self, event):
         try:
-            if event.type() in [NSLeftMouseDown, NSRightMouseDown, NSMouseMoved]:
-                windowNumber = event.windowNumber()
-                windowList = CGWindowListCopyWindowInfo(kCGWindowListOptionOnScreenOnly, 
-                                                        kCGNullWindowID)
-                for window in windowList:
-                    if window['kCGWindowNumber'] == windowNumber:
-                        geometry = window['kCGWindowBounds'] 
-                        screen_hook(window['kCGWindowOwnerName'],
-                                    window['kCGWindowName'],
-                                    geometry['X'], 
-                                    geometry['Y'], 
-                                    geometry['Width'], 
-                                    geometry['Height'])
-                        break
+            activeApps = workspace.runningApplications()
+            #Have to look into this if it is too slow on move and scoll,
+            #right now the check is done for everything.
+            for app in activeApps:
+                if app.isActive():
+                    if app.localizedName() != self.currentApp:
+                        self.currentApp = app.localizedName()
+                        options = kCGWindowListOptionOnScreenOnly 
+                        windowList = CGWindowListCopyWindowInfo(options,
+                                                                kCGNullWindowID)
+                        for window in windowList:
+                            if window['kCGWindowOwnerName'] == currentApp:
+                                geometry = window['kCGWindowBounds'] 
+                                screen_hook(window['kCGWindowOwnerName'],
+                                            window['kCGWindowName'],
+                                            geometry['X'], 
+                                            geometry['Y'], 
+                                            geometry['Width'], 
+                                            geometry['Height'])
+                                break
+                    break
             if event.type() == NSLeftMouseDown:
                 loc = NSEvent.mouseLocation()
                 self.mouse_button_hook(1, loc.x, loc.y, True)
@@ -68,7 +80,6 @@ class SniffCocoa:
             elif event.type() == NSScrollWheel:
                 # Scroll behaves differently on OS X then in Xorg, need to think of something here
             elif event.type() == NSKeyDown:
-                # NEED TO FIX CHECK FOR DISLAY CHANGE!!
                 modifiers = [] # OS X api doesn't care it if is left or right
                 if (flags & NSControlKeyMask):
                     modifiers.append('CONTROL')

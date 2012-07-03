@@ -90,7 +90,7 @@ class SniffCocoa:
                     modifiers.append('COMMAND')
                 self.key_hook(event.keyCode(), 
                               modifiers,
-                              event.characters(),
+                              event.charactersIgnoringModifiers(),
                               event.isARepeat())
             elif event.type() == NSMouseMoved:
                 loc = NSEvent.mouseLocation()

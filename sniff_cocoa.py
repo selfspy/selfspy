@@ -1,13 +1,13 @@
 from Foundation import NSObject, NSLog
 from AppKit import NSApplication, NSApp, NSWorkspace
 from Cocoa import (NSEvent,
-                   NSKeyDown, NSKeyDownMask, NSKeyUp, NSKeyUpMask
+                   NSKeyDown, NSKeyDownMask, NSKeyUp, NSKeyUpMask,
                    NSLeftMouseUp, NSLeftMouseDown, NSLeftMouseUpMask, NSLeftMouseDownMask,
                    NSRightMouseUp, NSRightMouseDown, NSRightMouseUpMask, NSRightMouseDownMask,
                    NSMouseMoved, NSMouseMovedMask,
                    NSScrollWheel, NSScrollWheelMask,
                    NSAlternateKeyMask, NSCommandKeyMask, NSControlKeyMask)
-from Quartz import CGWindowListCopyWindowInfo
+from Quartz import CGWindowListCopyWindowInfo, kCGWindowListOptionOnScreenOnly, kCGNullWindowID
 from PyObjCTools import AppHelper
 
 class SniffCocoa:
@@ -46,7 +46,7 @@ class SniffCocoa:
     
     def handler(self, event):
         try:
-            activeApps = workspace.runningApplications()
+            activeApps = self.workspace.runningApplications()
             #Have to look into this if it is too slow on move and scoll,
             #right now the check is done for everything.
             for app in activeApps:
@@ -57,14 +57,14 @@ class SniffCocoa:
                         windowList = CGWindowListCopyWindowInfo(options,
                                                                 kCGNullWindowID)
                         for window in windowList:
-                            if window['kCGWindowOwnerName'] == currentApp:
+                            if window['kCGWindowOwnerName'] == self.currentApp:
                                 geometry = window['kCGWindowBounds'] 
-                                screen_hook(window['kCGWindowOwnerName'],
-                                            window['kCGWindowName'],
-                                            geometry['X'], 
-                                            geometry['Y'], 
-                                            geometry['Width'], 
-                                            geometry['Height'])
+                                self.screen_hook(window['kCGWindowOwnerName'],
+                                                 window['kCGWindowName'],
+                                                 geometry['X'], 
+                                                 geometry['Y'], 
+                                                 geometry['Width'], 
+                                                 geometry['Height'])
                                 break
                     break
             if event.type() == NSLeftMouseDown:
@@ -77,9 +77,10 @@ class SniffCocoa:
                 self.mouse_button_hook(3, loc.x, loc.y, True)
 #           elif event.type() == NSRightMouseUp:
 #               self.mouse_button_hook(2, False)
-            elif event.type() == NSScrollWheel:
+#           elif event.type() == NSScrollWheel:
                 # Scroll behaves differently on OS X then in Xorg, need to think of something here
             elif event.type() == NSKeyDown:
+                flags = event.modifierFlags()
                 modifiers = [] # OS X api doesn't care it if is left or right
                 if (flags & NSControlKeyMask):
                     modifiers.append('CONTROL')
@@ -89,13 +90,13 @@ class SniffCocoa:
                     modifiers.append('COMMAND')
                 self.key_hook(event.keyCode(), 
                               modifiers,
-                              event.characters(), 
-                              True, 
+                              event.characters(),
                               event.isARepeat())
             elif event.type() == NSMouseMoved:
                 loc = NSEvent.mouseLocation()
                 self.mouse_move_hook(loc.x, loc.y)
-        except KeyboardInterrupt:
+        except (Exception, KeyboardInterrupt) as e:
+            print e
             AppHelper.stopEventLoop()
 
 if __name__ == '__main__':

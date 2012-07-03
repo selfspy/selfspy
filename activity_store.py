@@ -51,7 +51,7 @@ class ActivityStore:
                 time.sleep(1)
 
     def run(self):
-        self.session = session_maker()
+        self.session = self.session_maker()
 
         if platform.system() == 'Darwin':
             self.sniffer = sniff_cocoa.SniffCocoa()
@@ -84,10 +84,10 @@ class ActivityStore:
                                                               height=win_height).scalar()
         if cur_geometry is None:
             cur_geometry = Geometry(win_x, win_y, win_width, win_height)
-            self.session.add(cur_geo)
+            self.session.add(cur_geometry)
         
-        cur_window = self.session.query(Geometry).filter_by(title=window_name,
-                                                            process_id=cur_process.id).scalar()
+        cur_window = self.session.query(Window).filter_by(title=window_name,
+                                                          process_id=cur_process.id).scalar()
         if cur_window is None:
             cur_window = Window(window_name, cur_process.id)
             self.session.add(cur_window)
@@ -132,7 +132,7 @@ class ActivityStore:
             self.key_presses = []
             self.last_key_time = time.time()
     
-    def got_key(self, keycode, state, string, repeat):
+    def got_key(self, keycode, state, string, is_repeat):
         """ Recieves key-presses and queues them for storage.
             keycode is the code sent by the keyboard to represent the pressed key
             state is the list of modifier keys pressed, each modifier key should be represented
@@ -141,24 +141,27 @@ class ActivityStore:
             string is the string representation of the key press
             repeat is True if the current key is a repeat sent by the keyboard """
         now = time.time()
-        if string and (len(state) <= 1) and (not state[0] in ['SHIFT' ,'SHIFT_L', 'SHIFT_R']):
-            self.key_presses.append(KeyPress(string, now - last_key_time, is_repeat))
+        if string and (len(state) == 1) and (state[0] in ['SHIFT' ,'SHIFT_L', 'SHIFT_R']):
+            print 
+            self.key_presses.append(KeyPress(string, now - self.last_key_time, is_repeat))
             self.last_key_time = now
         else:
             s = string
             for modifier in state:
                 s = '<['+modifier+'] ' + s +'>'
-            self.key_presses.append(KeyPress(s, now - last_key_time, is_repeat))
+            self.key_presses.append(KeyPress(s, now - self.last_key_time, is_repeat))
             self.last_key_time = now
 
     def store_click(self, button, x, y):
         """ Stores incoming mouse-clicks """
         self.session.add(Click(button, 
-                               press, 
+                               True, 
                                x, y,
+                               len(self.mouse_path),
                                self.current_window.proc_id,
                                self.current_window.win_id, 
                                self.current_window.geo_id))
+        self.mouse_path = []
         self.trycommit()
 
     def got_mouse_click(self, button, x, y, press):
@@ -167,7 +170,7 @@ class ActivityStore:
             x,y are the coordinates of the keypress
             press is True if it pressed down, False if released"""
         if press:
-            self.store_click(button, x, y, press)
+            self.store_click(button, x, y)
 
     def got_mouse_move(self, x, y):
         """ Queues mouse movements.

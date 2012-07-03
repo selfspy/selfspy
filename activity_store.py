@@ -92,14 +92,14 @@ class ActivityStore:
             cur_window = Window(window_name, cur_process.id)
             self.session.add(cur_window)
 
-        self.trycommit()
-
         if (self.current_window.proc_id != cur_process.id or 
             self.current_window.win_id != cur_window.id):
             self.store_keys() # happens before as these keypresses belong to the previous window
             self.current_window.proc_id = cur_process.id
             self.current_window.win_id = cur_window.id
             self.current_window.geo_id = cur_geometry.id
+            
+        self.trycommit()
 
 
     def store_keys(self):
@@ -115,7 +115,7 @@ class ActivityStore:
                 keys = []
             else:
                 for key in keys:
-                    curtext += keys
+                    curtext += key
 
             self.session.add(Keys(curtext.encode('utf8'), 
                                   keys,

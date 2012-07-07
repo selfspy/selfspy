@@ -24,6 +24,7 @@ You run selfspy with `./selfspy.py`. You should probably start with `./selfspy.p
 
 ```
 usage: selfspy.py [-h] [-c FILE] [-p PASSWORD] [-d DATA_DIR] [-n]
+                  [--change-password]
 
 Monitor your computer activities and store them in an encrypted database for
 later analysis or disaster recovery.
@@ -54,6 +55,8 @@ optional arguments:
                         letters. Key timings are stored to enable activity
                         calculation in selfstats.py. If this switch is used,
                         you will never be asked for password.
+  --change-password     Change the password used to encrypt the keys columns
+                        and exit.
 ```
 
 Everything you do is stored in a Sqlite database in your DATA_DIR. Things that you type (passwords, for example) are generally too sensitive to leave in plain text, so they are encrypted with the supplied password. Other database columns, like process names and window titles, are not encrypted. This makes it faster and easier to search for them later.

@@ -165,7 +165,7 @@ class ActivityStore:
 
     def got_mouse_click(self, button, x, y, press):
         """ Recieves mouse clicks and sends them for storage.
-            Mouse buttons: left: 1, middle: 2, right: 3, scroll up: 4, down:5 
+            Mouse buttons: left: 1, middle: 2, right: 3, scroll up: 4, down:5, left:6, right:7
             x,y are the coordinates of the keypress
             press is True if it pressed down, False if released"""
         if press:
@@ -180,3 +180,4 @@ class ActivityStore:
         """ stops the sniffer and stores the latest keys. To be used on shutdown of program"""
         self.sniffer.cancel()
         self.store_keys()
+

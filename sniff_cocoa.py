@@ -67,18 +67,28 @@ class SniffCocoa:
                                                  geometry['Height'])
                                 break
                     break
+            loc = NSEvent.mouseLocation()
             if event.type() == NSLeftMouseDown:
-                loc = NSEvent.mouseLocation()
                 self.mouse_button_hook(1, loc.x, loc.y, True)
 #           elif event.type() == NSLeftMouseUp:
-#               self.mouse_button_hook(1, False)
+#               self.mouse_button_hook(1, loc.x, loc.y, True)
             elif event.type() == NSRightMouseDown:
-                loc = NSEvent.mouseLocation()
                 self.mouse_button_hook(3, loc.x, loc.y, True)
 #           elif event.type() == NSRightMouseUp:
-#               self.mouse_button_hook(2, False)
-#           elif event.type() == NSScrollWheel:
-                # Scroll behaves differently on OS X then in Xorg, need to think of something here
+#               self.mouse_button_hook(2, loc.x, loc.y, True)
+            elif event.type() == NSScrollWheel:
+                if event.deltaY() > 0:
+                    self.mouse_button_hook(4, loc.x, loc.y, True)
+                elif event.deltaY() < 0:
+                    self.mouse_button_hook(5, loc.x, loc.y, True)
+                if event.deltaX() > 0:
+                    self.mouse_button_hook(6, loc.x, loc.y, True)
+                elif event.deltaX() < 0:
+                    self.mouse_button_hook(7, loc.x, loc.y, True)
+#               if event.deltaX() > 0:
+#                   self.mouse_button_hook(8, loc.x, loc.y, True)
+#               elif event.deltaX() < 0:
+#                   self.mouse_button_hook(9, loc.x, loc.y, True)
             elif event.type() == NSKeyDown:
                 flags = event.modifierFlags()
                 modifiers = [] # OS X api doesn't care it if is left or right
@@ -93,7 +103,6 @@ class SniffCocoa:
                               event.charactersIgnoringModifiers(),
                               event.isARepeat())
             elif event.type() == NSMouseMoved:
-                loc = NSEvent.mouseLocation()
                 self.mouse_move_hook(loc.x, loc.y)
         except (Exception, KeyboardInterrupt) as e:
             print e
@@ -102,3 +111,4 @@ class SniffCocoa:
 if __name__ == '__main__':
     sc = SniffCocoa()
     sc.run()
+

@@ -35,4 +35,4 @@ def get_tk_password(verify, message=None):
         
 
 if __name__ == '__main__':
-    print(get_password())
+    print get_password()

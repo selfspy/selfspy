@@ -36,10 +36,10 @@ class SniffX:
     def run(self):
         # Check if the extension is present
         if not self.record_display.has_extension("RECORD"):
-            print("RECORD extension not found")
+            print "RECORD extension not found"
             sys.exit(1)
         else:
-            print("RECORD extension present")
+            print "RECORD extension present"
 
         # Create a recording context; we only want key and mouse events
         self.ctx = self.record_display.record_create_context(
@@ -71,7 +71,7 @@ class SniffX:
         if reply.category != record.FromServer:
             return
         if reply.client_swapped:
-            print("* received swapped protocol data, cowardly ignored")
+            print "* received swapped protocol data, cowardly ignored"
             return
         if not len(reply.data) or ord(reply.data[0]) < 2:
             # not an event
@@ -88,7 +88,7 @@ class SniffX:
             elif event.type == X.MappingNotify:
                 self.the_display.refresh_keyboard_mapping()
                 newkeymap = self.the_display._keymap_codes
-                print('Change keymap!', newkeymap == self.keymap)
+                print 'Change keymap!', newkeymap == self.keymap
                 self.keymap = newkeymap
                 
 

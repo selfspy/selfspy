@@ -69,26 +69,26 @@ class SniffCocoa:
                     break
             loc = NSEvent.mouseLocation()
             if event.type() == NSLeftMouseDown:
-                self.mouse_button_hook(1, loc.x, loc.y, True)
+                self.mouse_button_hook(1, loc.x, loc.y)
 #           elif event.type() == NSLeftMouseUp:
-#               self.mouse_button_hook(1, loc.x, loc.y, True)
+#               self.mouse_button_hook(1, loc.x, loc.y)
             elif event.type() == NSRightMouseDown:
-                self.mouse_button_hook(3, loc.x, loc.y, True)
+                self.mouse_button_hook(3, loc.x, loc.y,)
 #           elif event.type() == NSRightMouseUp:
-#               self.mouse_button_hook(2, loc.x, loc.y, True)
+#               self.mouse_button_hook(2, loc.x, loc.y)
             elif event.type() == NSScrollWheel:
                 if event.deltaY() > 0:
-                    self.mouse_button_hook(4, loc.x, loc.y, True)
+                    self.mouse_button_hook(4, loc.x, loc.y)
                 elif event.deltaY() < 0:
-                    self.mouse_button_hook(5, loc.x, loc.y, True)
+                    self.mouse_button_hook(5, loc.x, loc.y)
                 if event.deltaX() > 0:
-                    self.mouse_button_hook(6, loc.x, loc.y, True)
+                    self.mouse_button_hook(6, loc.x, loc.y)
                 elif event.deltaX() < 0:
-                    self.mouse_button_hook(7, loc.x, loc.y, True)
+                    self.mouse_button_hook(7, loc.x, loc.y)
 #               if event.deltaX() > 0:
-#                   self.mouse_button_hook(8, loc.x, loc.y, True)
+#                   self.mouse_button_hook(8, loc.x, loc.y)
 #               elif event.deltaX() < 0:
-#                   self.mouse_button_hook(9, loc.x, loc.y, True)
+#                   self.mouse_button_hook(9, loc.x, loc.y)
             elif event.type() == NSKeyDown:
                 flags = event.modifierFlags()
                 modifiers = [] # OS X api doesn't care it if is left or right

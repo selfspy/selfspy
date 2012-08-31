@@ -1,0 +1,5 @@
+SQLAlchemy==0.7.6
+lockfile==0.9.1
+pycrypto==2.5
+python-daemon==1.6
+pyobjc=2.3

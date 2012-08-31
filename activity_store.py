@@ -163,13 +163,12 @@ class ActivityStore:
         self.mouse_path = []
         self.trycommit()
 
-    def got_mouse_click(self, button, x, y, press):
+    def got_mouse_click(self, button, x, y):
         """ Recieves mouse clicks and sends them for storage.
             Mouse buttons: left: 1, middle: 2, right: 3, scroll up: 4, down:5, left:6, right:7
             x,y are the coordinates of the keypress
             press is True if it pressed down, False if released"""
-        if press:
-            self.store_click(button, x, y)
+        self.store_click(button, x, y)
 
     def got_mouse_move(self, x, y):
         """ Queues mouse movements.

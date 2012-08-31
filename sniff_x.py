@@ -8,6 +8,7 @@ import threading
 
 from Xlib import X, XK, display
 from Xlib.ext import record
+from Xlib.error import XError
 from Xlib.protocol import rq
 
 def state_to_idx(state): #this could be a dict, but I might want to extend it.
@@ -26,6 +27,7 @@ class SniffX:
         self.key_hook = lambda x: True
         self.mouse_button_hook = lambda x: True
         self.mouse_move_hook = lambda x: True
+        self.screen_hook = lambda x : True
 
         self.contextEventMask = [X.KeyPress, X.MotionNotify] #X.MappingNotify?
         
@@ -76,12 +78,29 @@ class SniffX:
         if not len(reply.data) or ord(reply.data[0]) < 2:
             # not an event
             return
+
+        cur_class, cur_window, cur_name = self.get_cur_window()
+        if not cur_class is None:
+            cur_geo = self.get_cur_geometry(cur_window)
+            if not cur_geo is None:
+                self.screen_hook(cur_class.decode('latin1'), 
+                                 cur_name, 
+                                 cur_geo.x,
+                                 cur_geo.y,
+                                 geo.width,
+                                 geo.height)        
+
         data = reply.data
         while len(data):
-            event, data = rq.EventField(None).parse_binary_value(data, self.record_display.display, None, None)
-            if event.type in [X.KeyPress, X.KeyRelease]:
+            event, data = rq.EventField(None).parse_binary_value(data,
+                                                                 self.record_display.display, 
+                                                                 None, 
+                                                                 None)
+            if event.type in [X.KeyPress]: 
+                # X.KeyRelease, we don't log this anyway
                 self.key_hook(*self.key_event(event))
-            elif event.type in [X.ButtonPress, X.ButtonRelease]:
+            elif event.type in [X.ButtonPress]:
+                # X.ButtonRelease we don't log this anyway.
                 self.mouse_button_hook(*self.button_event(event))
             elif event.type == X.MotionNotify:
                 self.mouse_move_hook(event.root_x, event.root_y)
@@ -101,15 +120,54 @@ class SniffX:
             return self.lookup_keysym(cn)
 
     def key_event(self, event):
-        return event.detail, event.state, self.get_key_name(event.detail, event.state), event.type == X.KeyPress, event.sequence_number == 1
+        return (event.detail, 
+                event.state.upper(), 
+                self.get_key_name(event.detail, event.state),
+                event.sequence_number == 1)
     
     def button_event(self, event):
-        return event.detail, event.type == X.ButtonPress
+        return event.detail, event.root_x, event.root_y
 
     def lookup_keysym(self, keysym):
         if keysym in self.keysymdict:
             return self.keysymdict[keysym]
         return "[%d]" % keysym
+
+
+    def get_cur_window(self):
+        i = 0
+        cur_class = None
+        cur_window = None
+        cur_name = None
+        while i < 10:
+            try:
+                cur_window = self.the_display.get_input_focus().focus
+                cur_class = None
+                cur_name = None
+                while cur_class is None:
+                    if type(cur_window) is int:
+                        return None, None, None
+            
+                    cur_name = cur_window.get_wm_name()
+                    cur_class = cur_window.get_wm_class()[1]
+                    if cur_class is None:
+                        cur_window = cur_window.query_tree().parent
+            except XError:
+                i += 1
+        return cur_class, cur_window, cur_name
+
+    def get_geometry(self, cur_window):
+        i = 0
+        geo = None
+        while i < 10:
+            try:
+                geo = cur_window.get_geometry()
+                break
+            except XError:
+                i += 1
+        return geo
+
+        
 
     
 

@@ -17,8 +17,6 @@ class SniffCocoa:
         self.mouse_move_hook = lambda x: True
         self.screen_hook = lambda x: True
 
-        self.currentApp = None
-
     def createAppDelegate (self) :
         sc = self
         class AppDelegate(NSObject):
@@ -51,21 +49,19 @@ class SniffCocoa:
             #right now the check is done for everything.
             for app in activeApps:
                 if app.isActive():
-                    if app.localizedName() != self.currentApp:
-                        self.currentApp = app.localizedName()
-                        options = kCGWindowListOptionOnScreenOnly 
-                        windowList = CGWindowListCopyWindowInfo(options,
-                                                                kCGNullWindowID)
-                        for window in windowList:
-                            if window['kCGWindowOwnerName'] == self.currentApp:
-                                geometry = window['kCGWindowBounds'] 
-                                self.screen_hook(window['kCGWindowOwnerName'],
-                                                 window['kCGWindowName'],
-                                                 geometry['X'], 
-                                                 geometry['Y'], 
-                                                 geometry['Width'], 
-                                                 geometry['Height'])
-                                break
+                    options = kCGWindowListOptionOnScreenOnly 
+                    windowList = CGWindowListCopyWindowInfo(options,
+                                                            kCGNullWindowID)
+                    for window in windowList:
+                        if window['kCGWindowOwnerName'] == app.localizedName():
+                            geometry = window['kCGWindowBounds'] 
+                            self.screen_hook(window['kCGWindowOwnerName'],
+                                             window['kCGWindowName'],
+                                             geometry['X'], 
+                                             geometry['Y'], 
+                                             geometry['Width'], 
+                                             geometry['Height'])
+                            break
                     break
             loc = NSEvent.mouseLocation()
             if event.type() == NSLeftMouseDown:

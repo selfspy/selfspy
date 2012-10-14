@@ -80,22 +80,20 @@ class SniffX:
             return
 
         cur_class, cur_window, cur_name = self.get_cur_window()
-        if not cur_class is None:
+        if cur_class:
             cur_geo = self.get_cur_geometry(cur_window)
-            if not cur_geo is None:
+            if cur_geo:
                 self.screen_hook(cur_class.decode('latin1'), 
                                  cur_name, 
                                  cur_geo.x,
                                  cur_geo.y,
-                                 geo.width,
-                                 geo.height)        
+                                 cur_geo.width,
+                                 cur_geo.height)
 
         data = reply.data
         while len(data):
-            event, data = rq.EventField(None).parse_binary_value(data,
-                                                                 self.record_display.display, 
-                                                                 None, 
-                                                                 None)
+            ef = rq.EventField(None)
+            event, data = ef.parse_binary_value(data, self.record_display.display, None, None)
             if event.type in [X.KeyPress]: 
                 # X.KeyRelease, we don't log this anyway
                 self.key_hook(*self.key_event(event))
@@ -108,8 +106,7 @@ class SniffX:
                 self.the_display.refresh_keyboard_mapping()
                 newkeymap = self.the_display._keymap_codes
                 print 'Change keymap!', newkeymap == self.keymap
-                self.keymap = newkeymap
-                
+                self.keymap = newkeymap   
 
     def get_key_name(self, keycode, state):
         state_idx = state_to_idx(state)
@@ -120,8 +117,16 @@ class SniffX:
             return self.lookup_keysym(cn)
 
     def key_event(self, event):
+        flags = event.state
+        modifiers = []
+        if (flags & X.ControlMask):
+            modifiers.append('CONTROL')
+        if (flags & X.Mod1Mask): #Mod1 is the alt key
+            modifiers.append('ALTERNATE')
+        if (flags & X.Mod4Mask): #Mod4 should be super/windows key
+            modifiers.append('SUPER') 
         return (event.detail, 
-                event.state.upper(), 
+                modifiers,
                 self.get_key_name(event.detail, event.state),
                 event.sequence_number == 1)
     
@@ -149,11 +154,15 @@ class SniffX:
                         return None, None, None
             
                     cur_name = cur_window.get_wm_name()
-                    cur_class = cur_window.get_wm_class()[1]
-                    if cur_class is None:
+                    cur_class = cur_window.get_wm_class()
+
+                    if cur_class:
+                        cur_class = cur_class[1]
+                    if not cur_class:
                         cur_window = cur_window.query_tree().parent
             except XError:
                 i += 1
+            break
         return cur_class, cur_window, cur_name
 
     def get_geometry(self, cur_window):
@@ -166,9 +175,3 @@ class SniffX:
             except XError:
                 i += 1
         return geo
-
-        
-
-    
-
-

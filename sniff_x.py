@@ -31,8 +31,9 @@ class SniffX:
 
         self.contextEventMask = [X.KeyPress, X.MotionNotify] #X.MappingNotify?
         
+        self.the_display = display.Display()
         self.record_display = display.Display()
-        self.keymap = self.record_display._keymap_codes
+        self.keymap = self.the_display._keymap_codes
         
     def run(self):
         # Check if the extension is present
@@ -65,8 +66,8 @@ class SniffX:
         self.record_display.record_free_context(self.ctx)
 
     def cancel(self):
-        self.record_display.record_disable_context(self.ctx)
-        self.record_display.flush()
+        self.the_display.record_disable_context(self.ctx)
+        self.the_display.flush()
     
     def processevents(self, reply):
         if reply.category != record.FromServer:
@@ -102,8 +103,8 @@ class SniffX:
             elif event.type == X.MotionNotify:
                 self.mouse_move_hook(event.root_x, event.root_y)
             elif event.type == X.MappingNotify:
-                self.record_display.refresh_keyboard_mapping()
-                newkeymap = self.record_display._keymap_codes
+                self.the_display.refresh_keyboard_mapping()
+                newkeymap = self.the_display._keymap_codes
                 print 'Change keymap!', newkeymap == self.keymap
                 self.keymap = newkeymap   
 
@@ -145,7 +146,7 @@ class SniffX:
         cur_name = None
         while i < 10:
             try:
-                cur_window = self.record_display.get_input_focus().focus
+                cur_window = self.the_display.get_input_focus().focus
                 cur_class = None
                 cur_name = None
                 while cur_class is None:

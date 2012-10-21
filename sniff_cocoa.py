@@ -56,7 +56,7 @@ class SniffCocoa:
                         if window['kCGWindowOwnerName'] == app.localizedName():
                             geometry = window['kCGWindowBounds'] 
                             self.screen_hook(window['kCGWindowOwnerName'],
-                                             window['kCGWindowName'],
+                                             window('kCGWindowName', u''),
                                              geometry['X'], 
                                              geometry['Y'], 
                                              geometry['Width'], 
@@ -100,9 +100,9 @@ class SniffCocoa:
                               event.isARepeat())
             elif event.type() == NSMouseMoved:
                 self.mouse_move_hook(loc.x, loc.y)
-        except (Exception, KeyboardInterrupt) as e:
-            print e
+        except (Exception, KeyboardInterrupt):
             AppHelper.stopEventLoop()
+            raise
 
 if __name__ == '__main__':
     sc = SniffCocoa()

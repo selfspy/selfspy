@@ -81,7 +81,7 @@ class SniffX:
 
         cur_class, cur_window, cur_name = self.get_cur_window()
         if cur_class:
-            cur_geo = self.get_cur_geometry(cur_window)
+            cur_geo = self.get_geometry(cur_window)
             if cur_geo:
                 self.screen_hook(cur_class.decode('latin1'), 
                                  cur_name, 

@@ -74,7 +74,7 @@ class ActivityStore:
             win_width is the width of the window
             win_height is the height of the window """
         cur_process = self.session.query(Process).filter_by(name=process_name).scalar()
-        if cur_process is None:
+        if not cur_process:
             cur_process = Process(process_name)
             self.session.add(cur_process)
             
@@ -82,24 +82,23 @@ class ActivityStore:
                                                               ypos=win_y, 
                                                               width=win_width, 
                                                               height=win_height).scalar()
-        if cur_geometry is None:
+        if not cur_geometry:
             cur_geometry = Geometry(win_x, win_y, win_width, win_height)
             self.session.add(cur_geometry)
         
         cur_window = self.session.query(Window).filter_by(title=window_name,
                                                           process_id=cur_process.id).scalar()
-        if cur_window is None:
+        if not cur_window:
             cur_window = Window(window_name, cur_process.id)
             self.session.add(cur_window)
 
-        if (self.current_window.proc_id != cur_process.id or 
-            self.current_window.win_id != cur_window.id):
+        if not (self.current_window.proc_id == cur_process.id
+                and self.current_window.win_id == cur_window.id):
+            self.trycommit()
             self.store_keys() # happens before as these keypresses belong to the previous window
             self.current_window.proc_id = cur_process.id
             self.current_window.win_id = cur_window.id
             self.current_window.geo_id = cur_geometry.id
-            
-        self.trycommit()
 
 
     def store_keys(self):

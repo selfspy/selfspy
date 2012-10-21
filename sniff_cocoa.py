@@ -81,9 +81,9 @@ class SniffCocoa:
                     self.mouse_button_hook(6, loc.x, loc.y)
                 elif event.deltaX() < 0:
                     self.mouse_button_hook(7, loc.x, loc.y)
-#               if event.deltaX() > 0:
+#               if event.deltaZ() > 0:
 #                   self.mouse_button_hook(8, loc.x, loc.y)
-#               elif event.deltaX() < 0:
+#               elif event.deltaZ() < 0:
 #                   self.mouse_button_hook(9, loc.x, loc.y)
             elif event.type() == NSKeyDown:
                 flags = event.modifierFlags()

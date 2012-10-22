@@ -44,24 +44,24 @@ class SniffCocoa:
     
     def handler(self, event):
         try:
-            options = kCGWindowListOptionOnScreenOnly 
-            windowList = CGWindowListCopyWindowInfo(options,
-                                                    kCGNullWindowID)
-            # Should see if it is possible to use NSWindow instead from
-            # [event window]. The problem is to get the window owner name.
-            for window in windowList:
-                if window['kCGWindowOwnerName'] == event.windowNumber():
-                    geometry = window['kCGWindowBounds'] 
-                    process_name = window['kCGWindowOwnerName']
-                    window_name = window('kCGWindowName', u'')
-                    if not window_name:
-                        window_name = process_name
-                    self.screen_hook(process_name,
-                                     window_name,
-                                     geometry['X'], 
-                                     geometry['Y'], 
-                                     geometry['Width'], 
-                                     geometry['Height'])
+            activeApps = self.workspace.runningApplications()
+            #Have to look into this if it is too slow on move and scoll,
+            #right now the check is done for everything.
+            for app in activeApps:
+                if app.isActive():
+                    options = kCGWindowListOptionOnScreenOnly 
+                    windowList = CGWindowListCopyWindowInfo(options,
+                                                            kCGNullWindowID)
+                    for window in windowList:
+                        if window['kCGWindowOwnerName'] == app.localizedName():
+                            geometry = window['kCGWindowBounds'] 
+                            self.screen_hook(window['kCGWindowOwnerName'],
+                                             window('kCGWindowName', u''),
+                                             geometry['X'], 
+                                             geometry['Y'], 
+                                             geometry['Width'], 
+                                             geometry['Height'])
+                            break
                     break
             loc = NSEvent.mouseLocation()
             if event.type() == NSLeftMouseDown:

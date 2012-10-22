@@ -84,7 +84,7 @@ class SniffX:
         if cur_class:
             cur_geo = self.get_geometry(cur_window)
             if cur_geo:
-                self.screen_hook(cur_class.decode('latin1'), 
+                self.screen_hook(cur_class, 
                                  cur_name, 
                                  cur_geo.x,
                                  cur_geo.y,
@@ -165,7 +165,7 @@ class SniffX:
             except XError:
                 i += 1
             break
-        return cur_class, cur_window, cur_name
+        return cur_class.decode('latin1'), cur_window, cur_name.decode('latin1')
 
     def get_geometry(self, cur_window):
         i = 0

@@ -72,7 +72,7 @@ class ActivityStore:
         self.sniffer.run()
 
     def got_screen_change(self, process_name, window_name, win_x, win_y, win_width, win_height):
-        """ Recieves a screen change and stores any changes. If the process or window has
+        """ Receives a screen change and stores any changes. If the process or window has
             changed it will also store any queued pressed keys.
             process_name is the name of the process running the current window
             window_name is the name of the window 
@@ -198,7 +198,7 @@ class ActivityStore:
         self.trycommit()
 
     def got_mouse_click(self, button, x, y):
-        """ Recieves mouse clicks and sends them for storage.
+        """ Receives mouse clicks and sends them for storage.
             Mouse buttons: left: 1, middle: 2, right: 3, scroll up: 4, down:5, left:6, right:7
             x,y are the coordinates of the keypress
             press is True if it pressed down, False if released"""

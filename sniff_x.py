@@ -1,21 +1,22 @@
 # This file is loosely based on examples/record_demo.py in python-xlib
 
 import sys
-import os
-import re
-import time
-import threading
 
 from Xlib import X, XK, display
 from Xlib.ext import record
 from Xlib.error import XError
 from Xlib.protocol import rq
 
-def state_to_idx(state): #this could be a dict, but I might want to extend it.
-    if state == 1: return 1
-    if state == 128: return 4
-    if state == 129: return 5
+
+def state_to_idx(state):  # this could be a dict, but I might want to extend it.
+    if state == 1:
+        return 1
+    if state == 128:
+        return 4
+    if state == 129:
+        return 5
     return 0
+
 
 class SniffX:
     def __init__(self):
@@ -27,9 +28,9 @@ class SniffX:
         self.key_hook = lambda x: True
         self.mouse_button_hook = lambda x: True
         self.mouse_move_hook = lambda x: True
-        self.screen_hook = lambda x : True
+        self.screen_hook = lambda x: True
 
-        self.contextEventMask = [X.KeyPress, X.MotionNotify] #X.MappingNotify?
+        self.contextEventMask = [X.KeyPress, X.MotionNotify]
         
         self.the_display = display.Display()
         self.record_display = display.Display()
@@ -112,7 +113,7 @@ class SniffX:
         state_idx = state_to_idx(state)
         cn = self.keymap[keycode][state_idx]
         if cn < 256:
-            return chr(cn).decode('latin1')#.encode('utf8')
+            return chr(cn).decode('latin1')
         else:
             return self.lookup_keysym(cn)
 
@@ -120,10 +121,10 @@ class SniffX:
         flags = event.state
         modifiers = []
         if (flags & X.ControlMask):
-            modifiers.append('CONTROL')
-        if (flags & X.Mod1Mask): #Mod1 is the alt key
-            modifiers.append('ALTERNATE')
-        if (flags & X.Mod4Mask): #Mod4 should be super/windows key
+            modifiers.append('CTRL')
+        if (flags & X.Mod1Mask):  # Mod1 is the alt key
+            modifiers.append('ALT')
+        if (flags & X.Mod4Mask):  # Mod4 should be super/windows key
             modifiers.append('SUPER') 
         return (event.detail, 
                 modifiers,
@@ -137,7 +138,6 @@ class SniffX:
         if keysym in self.keysymdict:
             return self.keysymdict[keysym]
         return "[%d]" % keysym
-
 
     def get_cur_window(self):
         i = 0

@@ -13,18 +13,21 @@ else:
 import models
 from models import Process, Window, Geometry, Click, Keys
 
+
 class Display:
     def __init__(self):
-         self.proc_id = None
-         self.win_id = None 
-         self.geo_id = None
+        self.proc_id = None
+        self.win_id = None 
+        self.geo_id = None
 
+        
 class KeyPress:
     def __init__(self, key, time, is_repeat):
         self.key = key
         self.time = time
         self.is_repeat = is_repeat
 
+        
 class ActivityStore:
     def __init__(self, db_name, encrypter=None, store_text=True):
         self.session_maker = models.initialize(db_name)
@@ -95,11 +98,10 @@ class ActivityStore:
         if not (self.current_window.proc_id == cur_process.id
                 and self.current_window.win_id == cur_window.id):
             self.trycommit()
-            self.store_keys() # happens before as these keypresses belong to the previous window
+            self.store_keys()  # happens before as these keypresses belong to the previous window
             self.current_window.proc_id = cur_process.id
             self.current_window.win_id = cur_window.id
             self.current_window.geo_id = cur_geometry.id
-
 
     def store_keys(self):
         """ Stores the current queued key-presses """
@@ -140,13 +142,13 @@ class ActivityStore:
             string is the string representation of the key press
             repeat is True if the current key is a repeat sent by the keyboard """
         now = time.time()
-        if string and (len(state) == 1) and (state[0] in ['SHIFT' ,'SHIFT_L', 'SHIFT_R']):
+        if string and (len(state) == 1) and (state[0] in ['SHIFT', 'SHIFT_L', 'SHIFT_R']):
             self.key_presses.append(KeyPress(string, now - self.last_key_time, is_repeat))
             self.last_key_time = now
         else:
             s = string
             for modifier in state:
-                s = '<['+modifier+'] ' + s +'>'
+                s = '<[' + modifier + '] ' + s + '>'
             self.key_presses.append(KeyPress(s, now - self.last_key_time, is_repeat))
             self.last_key_time = now
 
@@ -172,7 +174,7 @@ class ActivityStore:
     def got_mouse_move(self, x, y):
         """ Queues mouse movements.
             x,y are the new coorinates on moving the mouse"""
-        self.mouse_path.append([x,y])
+        self.mouse_path.append([x, y])
         
     def close(self):
         """ stops the sniffer and stores the latest keys. To be used on shutdown of program"""

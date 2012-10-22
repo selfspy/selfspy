@@ -13,18 +13,25 @@ else:
 import models
 from models import Process, Window, Geometry, Click, Keys
 
+
+SKIP_SHIFT = {'SHIFT', 'SHIFT_L', 'SHIFT_R'}
+SKIP_MODIFIERS = {"Shift_L", "Control_L", "Super_L", "Alt_L", "Super_R", "Control_R", "Shift_R", "[65027]"}  # [65027] is AltGr in X for some ungodly reason.
+
+
 class Display:
     def __init__(self):
-         self.proc_id = None
-         self.win_id = None 
-         self.geo_id = None
+        self.proc_id = None
+        self.win_id = None 
+        self.geo_id = None
 
+        
 class KeyPress:
     def __init__(self, key, time, is_repeat):
         self.key = key
         self.time = time
         self.is_repeat = is_repeat
 
+        
 class ActivityStore:
     def __init__(self, db_name, encrypter=None, store_text=True):
         self.session_maker = models.initialize(db_name)
@@ -36,7 +43,7 @@ class ActivityStore:
 
         self.key_presses = []
         self.mouse_path = []
-
+        
         self.current_window = Display()
 
         self.last_key_time = time.time()        
@@ -95,26 +102,52 @@ class ActivityStore:
         if not (self.current_window.proc_id == cur_process.id
                 and self.current_window.win_id == cur_window.id):
             self.trycommit()
-            self.store_keys() # happens before as these keypresses belong to the previous window
+            self.store_keys()  # happens before as these keypresses belong to the previous window
             self.current_window.proc_id = cur_process.id
             self.current_window.win_id = cur_window.id
             self.current_window.geo_id = cur_geometry.id
 
+    def filter_many(self):
+        specials_in_row = 0
+        lastpress = None
+        newpresses = []
+        for press in self.key_presses:
+            key = press.key
+            if specials_in_row and key != lastpress.key:
+                if specials_in_row > 1:
+                    lastpress.key = '%s]x%d>' % (lastpress.key[:-2], specials_in_row)
+                    
+                newpresses.append(lastpress)
+                specials_in_row = 0
 
+            if len(key) > 1:
+                specials_in_row += 1
+                lastpress = press
+            else:
+                newpresses.append(press)
+                
+        if specials_in_row:
+            if specials_in_row > 1:
+                lastpress.key = '%s]x%d>' % (lastpress.key[:-2], specials_in_row)
+            newpresses.append(lastpress)
+
+        self.key_presses = newpresses
+            
     def store_keys(self):
         """ Stores the current queued key-presses """
+        self.filter_many()
+        
         if self.key_presses:
             keys = [press.key for press in self.key_presses]
             timings = [press.time for press in self.key_presses]
-            add = lambda count, press: count + (not press.is_repeat and 1 or 0)
+            add = lambda count, press: count + (1 if press.is_repeat else 0)
             nrkeys = reduce(add, self.key_presses, 0)
             
             curtext = u""
             if not self.store_text:
                 keys = []
             else:
-                for key in keys:
-                    curtext += key
+                curtext = ''.join(keys)
 
             self.session.add(Keys(curtext.encode('utf8'), 
                                   keys,
@@ -132,7 +165,7 @@ class ActivityStore:
             self.last_key_time = time.time()
     
     def got_key(self, keycode, state, string, is_repeat):
-        """ Recieves key-presses and queues them for storage.
+        """ Receives key-presses and queues them for storage.
             keycode is the code sent by the keyboard to represent the pressed key
             state is the list of modifier keys pressed, each modifier key should be represented
                   with capital letters and optionally followed by an underscore and location
@@ -140,15 +173,17 @@ class ActivityStore:
             string is the string representation of the key press
             repeat is True if the current key is a repeat sent by the keyboard """
         now = time.time()
-        if string and (len(state) == 1) and (state[0] in ['SHIFT' ,'SHIFT_L', 'SHIFT_R']):
-            self.key_presses.append(KeyPress(string, now - self.last_key_time, is_repeat))
-            self.last_key_time = now
-        else:
-            s = string
-            for modifier in state:
-                s = '<['+modifier+'] ' + s +'>'
-            self.key_presses.append(KeyPress(s, now - self.last_key_time, is_repeat))
-            self.last_key_time = now
+
+        if string in SKIP_MODIFIERS:
+            return
+
+        if len(state) > 1 or (len(state) == 1 and state[0] not in SKIP_SHIFT):
+            string = '<[%s: %s]>' % (' '.join(state), string)
+        elif len(string) > 1:
+            string = '<[%s]>' % string
+
+        self.key_presses.append(KeyPress(string, now - self.last_key_time, is_repeat))
+        self.last_key_time = now
 
     def store_click(self, button, x, y):
         """ Stores incoming mouse-clicks """
@@ -172,7 +207,7 @@ class ActivityStore:
     def got_mouse_move(self, x, y):
         """ Queues mouse movements.
             x,y are the new coorinates on moving the mouse"""
-        self.mouse_path.append([x,y])
+        self.mouse_path.append([x, y])
         
     def close(self):
         """ stops the sniffer and stores the latest keys. To be used on shutdown of program"""

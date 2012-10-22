@@ -7,6 +7,7 @@ from sqlalchemy.ext.declarative import declarative_base, declared_attr
 from sqlalchemy import Index, Column, Boolean, Integer, Unicode, UnicodeText, DateTime, Binary, ForeignKey, create_engine
 from sqlalchemy.orm import sessionmaker, relationship, backref
 
+
 def initialize(fname):
     engine = create_engine('sqlite:///%s' % fname)
     Base.metadata.create_all(engine)
@@ -15,6 +16,7 @@ def initialize(fname):
 ENCRYPTER = None
 
 Base = declarative_base()
+
 
 class SpookMixin(object):
 
@@ -49,6 +51,7 @@ class Window(SpookMixin, Base):
     def __repr__(self):
         return "<Window '%s'>" % (self.title)
 
+    
 class Geometry(SpookMixin, Base):
     xpos = Column(Integer, nullable=False)
     ypos = Column(Integer, nullable=False)
@@ -66,6 +69,7 @@ class Geometry(SpookMixin, Base):
     def __repr__(self):
         return "<Geometry (%d, %d), (%d, %d)>" % (self.xpos, self.ypos, self.width, self.height)
 
+    
 class Click(SpookMixin, Base):
     button = Column(Integer, nullable=False)
     press = Column(Boolean, nullable=False)
@@ -96,11 +100,13 @@ class Click(SpookMixin, Base):
     def __repr__(self):
         return "<Click (%d, %d), (%d, %d, %d)>" % (self.x, self.y, self.button, self.press, self.nrmoves)
 
+    
 def pad(s, padnum):
     ls = len(s)
     if ls % padnum == 0:
         return s
     return s + '\0' * (padnum - (ls % padnum))
+
 
 def maybe_encrypt(s):
     if ENCRYPTER:
@@ -108,10 +114,12 @@ def maybe_encrypt(s):
         s = ENCRYPTER.encrypt(s)
     return s
 
+
 def maybe_decrypt(s):
     if ENCRYPTER:
         s = ENCRYPTER.decrypt(s)
     return s
+
 
 class Keys(SpookMixin, Base):
     text = Column(Binary, nullable=False)

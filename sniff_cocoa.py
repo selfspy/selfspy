@@ -6,6 +6,7 @@ from Cocoa import (NSEvent,
                    NSRightMouseUp, NSRightMouseDown, NSRightMouseUpMask, NSRightMouseDownMask,
                    NSMouseMoved, NSMouseMovedMask,
                    NSScrollWheel, NSScrollWheelMask,
+                   NSFlagsChanged, NSFlagsChangedMask,
                    NSAlternateKeyMask, NSCommandKeyMask, NSControlKeyMask)
 from Quartz import CGWindowListCopyWindowInfo, kCGWindowListOptionOnScreenOnly, kCGNullWindowID
 from PyObjCTools import AppHelper
@@ -28,7 +29,8 @@ class SniffCocoa:
                         | NSRightMouseDownMask 
                         | NSRightMouseUpMask
                         | NSMouseMovedMask 
-                        | NSScrollWheelMask)
+                        | NSScrollWheelMask
+                        | NSFlagsChangedMask)
                 NSEvent.addGlobalMonitorForEventsMatchingMask_handler_(mask, sc.handler)
         return AppDelegate
 

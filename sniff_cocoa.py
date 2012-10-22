@@ -55,14 +55,17 @@ class SniffCocoa:
                     windowList = CGWindowListCopyWindowInfo(options,
                                                             kCGNullWindowID)
                     for window in windowList:
-                        if window['kCGWindowOwnerName'] == app.localizedName():
+                        if (window['kCGWindowNumber'] == event.windowNumber() 
+                            or (not event.windowNumber()
+                                and window['kCGWindowOwnerName'] == app.localizedName())):
                             geometry = window['kCGWindowBounds'] 
                             self.screen_hook(window['kCGWindowOwnerName'],
-                                             window('kCGWindowName', u''),
+                                             window.get('kCGWindowName', u''),
                                              geometry['X'], 
                                              geometry['Y'], 
                                              geometry['Width'], 
                                              geometry['Height'])
+                            print window['kCGWindowOwnerName']
                             break
                     break
             loc = NSEvent.mouseLocation()

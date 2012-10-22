@@ -65,7 +65,6 @@ class SniffCocoa:
                                              geometry['Y'], 
                                              geometry['Width'], 
                                              geometry['Height'])
-                            print window['kCGWindowOwnerName']
                             break
                     break
             loc = NSEvent.mouseLocation()

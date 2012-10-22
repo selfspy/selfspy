@@ -120,12 +120,14 @@ class SniffX:
     def key_event(self, event):
         flags = event.state
         modifiers = []
-        if (flags & X.ControlMask):
-            modifiers.append('CTRL')
-        if (flags & X.Mod1Mask):  # Mod1 is the alt key
-            modifiers.append('ALT')
-        if (flags & X.Mod4Mask):  # Mod4 should be super/windows key
-            modifiers.append('SUPER') 
+        if flags & X.ControlMask:
+            modifiers.append('Ctrl')
+        if flags & X.Mod1Mask:  # Mod1 is the alt key
+            modifiers.append('Alt')
+        if flags & X.Mod4Mask:  # Mod4 should be super/windows key
+            modifiers.append('Super')
+        if flags & X.ShiftMask:
+            modifiers.append('Shift')
         return (event.detail, 
                 modifiers,
                 self.get_key_name(event.detail, event.state),

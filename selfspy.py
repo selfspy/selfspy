@@ -1,8 +1,24 @@
 #!/usr/bin/env python
 
+# Copyright 2012 David Fendrich
+
+# This file is part of Selfspy
+
+# Selfspy is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# Selfspy is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with Selfspy.  If not, see <http://www.gnu.org/licenses/>.
+
 import os
 import sys
-import time
 
 import argparse
 import ConfigParser
@@ -10,8 +26,6 @@ import ConfigParser
 import daemon
 import lockfile
 import signal
-import grp
-import pwd
 
 import hashlib
 from Crypto.Cipher import Blowfish
@@ -20,22 +34,11 @@ from activity_store import ActivityStore
 from password_dialog import get_password
 import check_password
 
-"""
-
-Todo:
-  test keymap switch
-
----Later
-  code documentation, unittests, pychecker ;)
-  replay key and mouse for process and time interval (maybe store as macro)
-  word search
-  calculate personal keymap
-
-"""
 
 DATA_DIR = '~/.selfspy'
 DBNAME = 'selfspy.sqlite'
 LOCK_FILE = 'selfspy.pid'
+
 
 def parse_config():
     conf_parser = argparse.ArgumentParser(description=__doc__, add_help=False,
@@ -58,6 +61,7 @@ def parse_config():
     parser.add_argument('-n', '--no-text', action='store_true', help='Do not store what you type. This will make your database smaller and less sensitive to security breaches. Process name, window titles, window geometry, mouse clicks, number of keys pressed and key timings will still be stored, but not the actual letters. Key timings are stored to enable activity calculation in selfstats.py. If this switch is used, you will never be asked for password.')
 
     return parser.parse_args()
+
 
 def make_encrypter(password):
     if password == "":
@@ -99,7 +103,6 @@ if __name__ == '__main__':
         signal.SIGHUP: 'terminate'
     }
 
-
     if args['no_text']:
         args['password'] = ""
 
@@ -112,7 +115,6 @@ if __name__ == '__main__':
         print 'Password failed'
         sys.exit(1)
 
-#    with context:    
     astore = ActivityStore(os.path.join(args['data_dir'], DBNAME), 
                            encrypter, store_text=(not args['no_text']))
                         

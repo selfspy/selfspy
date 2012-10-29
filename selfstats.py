@@ -1,5 +1,22 @@
 #!/usr/bin/env python
 
+# Copyright 2012 David Fendrich
+
+# This file is part of Selfspy
+
+# Selfspy is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# Selfspy is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with Selfspy.  If not, see <http://www.gnu.org/licenses/>.
+
 import os
 import sys
 import re
@@ -21,24 +38,23 @@ from period import Period
 
 import models
 
-"""
-    test
-      config file
-"""
-
 ACTIVE_SECONDS = 180
-PERIOD_LOOKUP = {'s' : 'seconds', 'm' : 'minutes', 'h' : 'hours', 'd' : 'days', 'w' : 'weeks'}
+PERIOD_LOOKUP = {'s': 'seconds', 'm': 'minutes', 'h': 'hours', 'd': 'days', 'w': 'weeks'}
 ACTIVITY_ACTIONS = {'active', 'periods', 'pactive', 'tactive', 'ratios'}
 SUMMARY_ACTIONS = ACTIVITY_ACTIONS.union({'pkeys', 'tkeys', 'key_freqs', 'clicks', 'ratios'})
 
 PROCESS_ACTIONS = {'pkeys', 'pactive'}
 WINDOW_ACTIONS = {'tkeys', 'tactive'}
 
-BUTTON_MAP = [('button1','left'), ('button2','middle'), ('button3','right'), ('button4','up'), ('button5','down')]
+BUTTON_MAP = [('button1', 'left'),
+              ('button2', 'middle'),
+              ('button3', 'right'),
+              ('button4', 'up'),
+              ('button5', 'down')]
+
 
 def pretty_seconds(secs):
     secs = int(secs)
-    starts = secs
     active = False
     outs = ''
     days = secs / (3600 * 24)
@@ -53,7 +69,6 @@ def pretty_seconds(secs):
     if active:
         outs += '%dh ' % hours
     secs -= hours * 3600
-
     
     minutes = secs / 60
     if minutes:
@@ -71,7 +86,8 @@ def make_time_string(dates, clock):
     now = datetime.datetime.now()
     now2 = datetime.datetime.now()
 
-    if dates is None: dates = []
+    if dates is None:
+        dates = []
 
     if len(dates) > 3:
         print 'Max three arguments to date', dates
@@ -79,9 +95,12 @@ def make_time_string(dates, clock):
 
     try:
         dates = [int(d) for d in dates]
-        if len(dates) == 3: now = now.replace(year=dates[0])
-        if len(dates) >= 2: now = now.replace(month=dates[-2])
-        if len(dates) >= 1: now = now.replace(day=dates[-1])
+        if len(dates) == 3:
+            now = now.replace(year=dates[0])
+        if len(dates) >= 2:
+            now = now.replace(month=dates[-2])
+        if len(dates) >= 1:
+            now = now.replace(day=dates[-1])
 
         if len(dates) == 2:
             if now > now2:
@@ -111,6 +130,7 @@ def make_time_string(dates, clock):
             now -= datetime.timedelta(days=1)
 
     return now.strftime('%Y-%m-%d %H:%M'), now
+
 
 def make_period(q, period, who, start, prop):
     if len(period) < 1 or len(period) > 2:
@@ -142,6 +162,7 @@ def create_times(row):
         abs_times.append(current_time)
     return abs_times
 
+
 class Selfstats:
     def __init__(self, db_name, args):
         self.args = args
@@ -166,8 +187,10 @@ class Selfstats:
         self.need_process = any(self.args[k] for k in PROCESS_ACTIONS)
         self.need_window = any(self.args[k] for k in WINDOW_ACTIONS)
 
-        if self.args['body'] is not None: self.need_text = True
-        if self.args['showtext']: self.need_text = True
+        if self.args['body'] is not None:
+            self.need_text = True
+        if self.args['showtext']:
+            self.need_text = True
         cutoff = [self.args[k] for k in ACTIVITY_ACTIONS if self.args[k]]
         if cutoff:
             if any(c != cutoff[0] for c in cutoff):
@@ -175,9 +198,11 @@ class Selfstats:
                 sys.exit(1)
             self.need_activity = cutoff[0]
             self.need_timings = True
-        if self.args['key_freqs']: self.need_keys = True
+        if self.args['key_freqs']:
+            self.need_keys = True
 
-        if any(self.args[k] for k in SUMMARY_ACTIONS): self.need_summary = True
+        if any(self.args[k] for k in SUMMARY_ACTIONS):
+            self.need_summary = True
 
     def maybe_reg_filter(self, q, name, names, table, source_prop, target_prop):
         if self.args[name] is not None:
@@ -219,16 +244,19 @@ class Selfstats:
                 q = make_period(q, self.args['limit'], '--limit', start, startprop)
 
         q, found = self.maybe_reg_filter(q, 'process', 'process(es)', models.Process, 'name', prop.process_id)
-        if not found: return None
+        if not found:
+            return None
 
         q, found = self.maybe_reg_filter(q, 'title', 'title(s)', models.Window, 'title', prop.window_id)
-        if not found: return None
+        if not found:
+            return None
 
         return q
 
     def filter_keys(self):
         q = self.filter_prop(models.Keys, models.Keys.started)
-        if q is None: return
+        if q is None:
+            return
 
         if self.args['min_keys'] is not None:
             q = q.filter(Keys.nrkeys >= self.args['min_keys'])
@@ -250,7 +278,8 @@ class Selfstats:
     def filter_clicks(self):
         self.inmouse = True
         q = self.filter_prop(models.Click, models.Click.created_at)
-        if q is None: return
+        if q is None:
+            return
 
         for x in q:
             yield x

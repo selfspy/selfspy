@@ -19,6 +19,13 @@ Selfspy is only tested with Python 2.7 and has a few dependencies on other Pytho
 
 There is also a simple Makefile. Run `make install` as root/sudo, to install the files in /var/lib/selfspy and also create the symlinks /usr/bin/selfspy and /usr/bin/selfstats.
 
+Report issues here:
+https://github.com/gurgeh/selfspy/issues
+
+General discussion here:
+http://ost.io/gurgeh/selfspy
+
+
 ### Running Selfspy
 You run selfspy with `./selfspy.py`. You should probably start with `./selfspy.py --help` to get to know the command line arguments. As of this writing, it should look like this:
 

@@ -14,7 +14,6 @@ import models
 from models import Process, Window, Geometry, Click, Keys
 
 
-SKIP_SHIFT = {'SHIFT', 'SHIFT_L', 'SHIFT_R'}
 SKIP_MODIFIERS = {"", "Shift_L", "Control_L", "Super_L", "Alt_L", "Super_R", "Control_R", "Shift_R", "[65027]"}  # [65027] is AltGr in X for some ungodly reason.
 
 
@@ -177,7 +176,7 @@ class ActivityStore:
         if string in SKIP_MODIFIERS:
             return
 
-        if len(state) > 1 or (len(state) == 1 and state[0] not in SKIP_SHIFT):
+        if len(state) > 1 or (len(state) == 1 and state[0] != "Shift"):
             string = '<[%s: %s]>' % (' '.join(state), string)
         elif len(string) > 1:
             string = '<[%s]>' % string

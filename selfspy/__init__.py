@@ -30,9 +30,9 @@ import signal
 import hashlib
 from Crypto.Cipher import Blowfish
 
-from activity_store import ActivityStore
-from password_dialog import get_password
-import check_password
+from selfspy.activity_store import ActivityStore
+from selfspy.password_dialog import get_password
+from selfspy import check_password
 
 
 DATA_DIR = '~/.selfspy'
@@ -70,14 +70,15 @@ def make_encrypter(password):
         encrypter = Blowfish.new(hashlib.md5(password).digest())
     return encrypter
 
-if __name__ == '__main__':
+
+def main():
     args = vars(parse_config())
 
     args['data_dir'] = os.path.expanduser(args['data_dir'])
 
     def check_with_encrypter(password):
         encrypter = make_encrypter(password)
-        return check_password.check(args['data_dir'], encrypter) 
+        return check_password.check(args['data_dir'], encrypter)
 
     try:
         os.makedirs(args['data_dir'])
@@ -115,10 +116,14 @@ if __name__ == '__main__':
         print 'Password failed'
         sys.exit(1)
 
-    astore = ActivityStore(os.path.join(args['data_dir'], DBNAME), 
+    astore = ActivityStore(os.path.join(args['data_dir'], DBNAME),
                            encrypter, store_text=(not args['no_text']))
-                        
+
     try:
         astore.run()
     except SystemExit:
         astore.close()
+
+
+if __name__ == '__main__':
+    main()

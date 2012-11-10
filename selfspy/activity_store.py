@@ -23,12 +23,12 @@ import sqlalchemy
 
 import platform
 if platform.system() == 'Darwin':
-    import sniff_cocoa
+    from selfspy import sniff_cocoa
 else:
-    import sniff_x
+    from selfspy import sniff_x
 
-import models
-from models import Process, Window, Geometry, Click, Keys
+from selfspy import models
+from selfspy.models import Process, Window, Geometry, Click, Keys
 
 
 SKIP_MODIFIERS = {"", "Shift_L", "Control_L", "Super_L", "Alt_L", "Super_R", "Control_R", "Shift_R", "[65027]"}  # [65027] is AltGr in X for some ungodly reason.
@@ -37,17 +37,17 @@ SKIP_MODIFIERS = {"", "Shift_L", "Control_L", "Super_L", "Alt_L", "Super_R", "Co
 class Display:
     def __init__(self):
         self.proc_id = None
-        self.win_id = None 
+        self.win_id = None
         self.geo_id = None
 
-        
+
 class KeyPress:
     def __init__(self, key, time, is_repeat):
         self.key = key
         self.time = time
         self.is_repeat = is_repeat
 
-        
+
 class ActivityStore:
     def __init__(self, db_name, encrypter=None, store_text=True):
         self.session_maker = models.initialize(db_name)
@@ -59,10 +59,10 @@ class ActivityStore:
 
         self.key_presses = []
         self.mouse_path = []
-        
+
         self.current_window = Display()
 
-        self.last_key_time = time.time()        
+        self.last_key_time = time.time()
         self.started = NOW()
 
     def trycommit(self):
@@ -91,7 +91,7 @@ class ActivityStore:
         """ Receives a screen change and stores any changes. If the process or window has
             changed it will also store any queued pressed keys.
             process_name is the name of the process running the current window
-            window_name is the name of the window 
+            window_name is the name of the window
             win_x is the x position of the window
             win_y is the y position of the window
             win_width is the width of the window
@@ -100,15 +100,15 @@ class ActivityStore:
         if not cur_process:
             cur_process = Process(process_name)
             self.session.add(cur_process)
-            
-        cur_geometry = self.session.query(Geometry).filter_by(xpos=win_x, 
-                                                              ypos=win_y, 
-                                                              width=win_width, 
+
+        cur_geometry = self.session.query(Geometry).filter_by(xpos=win_x,
+                                                              ypos=win_y,
+                                                              width=win_width,
                                                               height=win_height).scalar()
         if not cur_geometry:
             cur_geometry = Geometry(win_x, win_y, win_width, win_height)
             self.session.add(cur_geometry)
-        
+
         cur_window = self.session.query(Window).filter_by(title=window_name,
                                                           process_id=cur_process.id).scalar()
         if not cur_window:
@@ -132,7 +132,7 @@ class ActivityStore:
             if specials_in_row and key != lastpress.key:
                 if specials_in_row > 1:
                     lastpress.key = '%s]x%d>' % (lastpress.key[:-2], specials_in_row)
-                    
+
                 newpresses.append(lastpress)
                 specials_in_row = 0
 
@@ -141,31 +141,31 @@ class ActivityStore:
                 lastpress = press
             else:
                 newpresses.append(press)
-                
+
         if specials_in_row:
             if specials_in_row > 1:
                 lastpress.key = '%s]x%d>' % (lastpress.key[:-2], specials_in_row)
             newpresses.append(lastpress)
 
         self.key_presses = newpresses
-            
+
     def store_keys(self):
         """ Stores the current queued key-presses """
         self.filter_many()
-        
+
         if self.key_presses:
             keys = [press.key for press in self.key_presses]
             timings = [press.time for press in self.key_presses]
             add = lambda count, press: count + (1 if press.is_repeat else 0)
             nrkeys = reduce(add, self.key_presses, 0)
-            
+
             curtext = u""
             if not self.store_text:
                 keys = []
             else:
                 curtext = ''.join(keys)
 
-            self.session.add(Keys(curtext.encode('utf8'), 
+            self.session.add(Keys(curtext.encode('utf8'),
                                   keys,
                                   timings,
                                   nrkeys,
@@ -179,7 +179,7 @@ class ActivityStore:
             self.started = NOW()
             self.key_presses = []
             self.last_key_time = time.time()
-    
+
     def got_key(self, keycode, state, string, is_repeat):
         """ Receives key-presses and queues them for storage.
             keycode is the code sent by the keyboard to represent the pressed key
@@ -203,12 +203,12 @@ class ActivityStore:
 
     def store_click(self, button, x, y):
         """ Stores incoming mouse-clicks """
-        self.session.add(Click(button, 
-                               True, 
+        self.session.add(Click(button,
+                               True,
                                x, y,
                                len(self.mouse_path),
                                self.current_window.proc_id,
-                               self.current_window.win_id, 
+                               self.current_window.win_id,
                                self.current_window.geo_id))
         self.mouse_path = []
         self.trycommit()
@@ -224,7 +224,7 @@ class ActivityStore:
         """ Queues mouse movements.
             x,y are the new coorinates on moving the mouse"""
         self.mouse_path.append([x, y])
-        
+
     def close(self):
         """ stops the sniffer and stores the latest keys. To be used on shutdown of program"""
         self.sniffer.cancel()

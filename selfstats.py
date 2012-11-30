@@ -38,6 +38,9 @@ from period import Period
 
 import models
 
+import codecs
+sys.stdout = codecs.getwriter('utf8')(sys.stdout)
+
 ACTIVE_SECONDS = 180
 PERIOD_LOOKUP = {'s': 'seconds', 'm': 'minutes', 'h': 'hours', 'd': 'days', 'w': 'weeks'}
 ACTIVITY_ACTIONS = {'active', 'periods', 'pactive', 'tactive', 'ratios'}

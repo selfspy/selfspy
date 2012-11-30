@@ -156,7 +156,7 @@ class ActivityStore:
         if self.key_presses:
             keys = [press.key for press in self.key_presses]
             timings = [press.time for press in self.key_presses]
-            add = lambda count, press: count + (1 if press.is_repeat else 0)
+            add = lambda count, press: count + (0 if press.is_repeat else 1)
             nrkeys = reduce(add, self.key_presses, 0)
             
             curtext = u""

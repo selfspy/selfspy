@@ -178,6 +178,9 @@ class Keys(SpookMixin, Base):
         keys = maybe_decrypt(self.keys)
         return json.loads(zlib.decompress(keys))
 
+    def load_timings(self):
+        return json.loads(zlib.decompress(self.timings))
+
     def __repr__(self):
         return "<Keys %s>" % self.nrkeys
 

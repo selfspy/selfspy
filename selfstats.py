@@ -157,9 +157,10 @@ def make_period(q, period, who, start, prop):
 def create_times(row):
     current_time = time.mktime(row.created_at.timetuple())
     abs_times = [current_time]
-    for t in row.timings:
-        current_time += 1
+    for t in row.load_timings():
+        current_time -= t
         abs_times.append(current_time)
+    abs_times.reverse()
     return abs_times
 
 
@@ -295,7 +296,7 @@ class Selfstats:
 
         for row in fkeys:
             rows += 1
-            print row.id, row.started, pretty_seconds((row.created_at - row.started).total_seconds()), row.process.name, '"%s"'%row.window.title, row.nrkeys,
+            print row.id, row.started, pretty_seconds((row.created_at - row.started).total_seconds()), row.process.name, '"%s"' % row.window.title, row.nrkeys,
             if self.args['showtext']:
                 print row.decrypt_text()
             else:
@@ -309,14 +310,14 @@ class Selfstats:
                     d1[sub] = {}
                 d1 = d1[sub]
 
-            for key,val in d2.items():
+            for key, val in d2.items():
                 if key not in d1:
                     d1[key] = 0
                 d1[key] += val
                 
             if self.need_activity:
                 if 'activity' not in d1:
-                    d1['activity'] = Period(self.need_activity)
+                    d1['activity'] = Period(self.need_activity, time.time())
                 d1['activity'].extend(activity_times)
 
         sumd = {}
@@ -325,7 +326,8 @@ class Selfstats:
         timings = []
         keys = Counter()
         for row in self.filter_keys():
-            d = {'nr':1, 'keystrokes':row.nrkeys}
+            d = {'nr': 1,
+                 'keystrokes': row.nrkeys}
 
             if self.need_activity:
                 timings = create_times(row)
@@ -339,10 +341,10 @@ class Selfstats:
                 keys.update(row.decrypt_keys())
 
         for click in self.filter_clicks():
-            d = {'noscroll_clicks' : click.button not in [4,5],
-                 'clicks' : 1,
-                 'button%d'%click.button : 1,
-                 'mousings' : click.nrmoves}
+            d = {'noscroll_clicks': click.button not in [4, 5],
+                 'clicks': 1,
+                 'button%d' % click.button: 1,
+                 'mousings': click.nrmoves}
             if self.need_activity:
                 timings = [time.mktime(click.created_at.timetuple())]
             if self.need_process:
@@ -357,7 +359,6 @@ class Selfstats:
         if self.args['key_freqs']:
             self.summary['key_freqs'] = keys
 
-
     def show_summary(self):
         print '%d keystrokes in %d key sequences,' % (self.summary.get('keystrokes', 0), self.summary.get('nr', 0)),
         print '%d clicks (%d excluding scroll),' % (self.summary.get('clicks', 0), self.summary.get('noscroll_clicks', 0)),
@@ -366,38 +367,40 @@ class Selfstats:
 
         if self.need_activity:
             act = self.summary.get('activity')
-            if act: act = act.calc_total()
-            else: act = 0
+            if act:
+                act = act.calc_total()
+            else:
+                act = 0
             print 'Total time active:', 
             print pretty_seconds(act)
             print
 
         if self.args['clicks']:
             print 'Mouse clicks:'
-            for key,name in BUTTON_MAP:
+            for key, name in BUTTON_MAP:
                 print self.summary.get(key, 0), name
             print
 
         if self.args['key_freqs']:
             print 'Key frequencies:'
-            for key,val in self.summary['key_freqs'].most_common():
+            for key, val in self.summary['key_freqs'].most_common():
                 print key, val
             print
 
         if self.args['pkeys']:
             print 'Processes sorted by keystrokes:'
             pdata = self.processes.items()
-            pdata.sort(key=lambda x:x[1].get('keystrokes',0), reverse=True)
+            pdata.sort(key=lambda x: x[1].get('keystrokes', 0), reverse=True)
             for name, data in pdata:
-                print name, data.get('keystrokes',0)
+                print name, data.get('keystrokes', 0)
             print
 
         if self.args['tkeys']:
             print 'Window titles sorted by keystrokes:'
             wdata = self.windows.items()
-            wdata.sort(key=lambda x:x[1].get('keystrokes',0), reverse=True)
+            wdata.sort(key=lambda x: x[1].get('keystrokes', 0), reverse=True)
             for name, data in wdata:
-                print name, data.get('keystrokes',0)
+                print name, data.get('keystrokes', 0)
             print
 
         if self.args['pactive']:
@@ -405,7 +408,7 @@ class Selfstats:
             for p in self.processes.values():
                 p['active_time'] = int(p['activity'].calc_total())
             pdata = self.processes.items()
-            pdata.sort(key=lambda x:x[1]['active_time'], reverse=True)
+            pdata.sort(key=lambda x: x[1]['active_time'], reverse=True)
             for name, data in pdata:
                 print '%s, %s' % (name, pretty_seconds(data['active_time']))
             print
@@ -415,17 +418,20 @@ class Selfstats:
             for w in self.windows.values():
                 w['active_time'] = int(w['activity'].calc_total())
             wdata = self.windows.items()
-            wdata.sort(key=lambda x:x[1]['active_time'], reverse=True)
+            wdata.sort(key=lambda x: x[1]['active_time'], reverse=True)
             for name, data in wdata:
                 print '%s, %s' % (name, pretty_seconds(data['active_time']))
             print
         
         if self.args['periods']:
-            print 'Active periods:'
-            for t1,t2 in self.summary['activity'].times:
-                d1 = datetime.datetime.fromtimestamp(t1)
-                d2 = datetime.datetime.fromtimestamp(t2)
-                print '%s - %s' % (d1.isoformat(' '), str(d2.time()).split('.')[0])
+            if 'activity' in self.summary:
+                print 'Active periods:'
+                for t1, t2 in self.summary['activity'].times:
+                    d1 = datetime.datetime.fromtimestamp(t1).replace(microsecond=0)
+                    d2 = datetime.datetime.fromtimestamp(t2).replace(microsecond=0)
+                    print '%s - %s' % (d1.isoformat(' '), str(d2.time()).split('.')[0])
+            else:
+                print 'No active periods.'
             print
 
         if self.args['ratios']:
@@ -511,7 +517,6 @@ if __name__ == '__main__':
             print 'First argument to --limit must be an integer'
             sys.exit(1)
         
-
     if ss.need_text or ss.need_keys:
         if args['password'] is None:
             args['password'] = get_password()

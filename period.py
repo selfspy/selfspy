@@ -19,16 +19,18 @@ import bisect
 
 
 class Period:
-    def __init__(self, cutoff):
+    def __init__(self, cutoff, maxtime):
         self.times = []
         self.cutoff = cutoff
+        self.maxtime = maxtime
 
     def append(self, time):
         ltimes = len(self.times)
+        end = min(time + self.cutoff, self.maxtime)
         
         def check_in(i):
             if self.times[i][0] <= time <= self.times[i][1]:
-                self.times[i] = (self.times[i][0], max(time + self.cutoff, self.times[i][1]))
+                self.times[i] = (self.times[i][0], max(end, self.times[i][1]))
                 return True
             return False
 
@@ -39,7 +41,7 @@ class Period:
                     self.times.pop(i + 1)
 
         if ltimes == 0:
-            self.times.append((time, time + self.cutoff))
+            self.times.append((time, end))
             return
 
         i = bisect.bisect(self.times, (time,))
@@ -48,7 +50,7 @@ class Period:
         elif i < ltimes and check_in(i):
             maybe_merge(i)
         else:
-            self.times.insert(i, (time, time + self.cutoff))
+            self.times.insert(i, (time, end))
             maybe_merge(i)
             
     def extend(self, times):

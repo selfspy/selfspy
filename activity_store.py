@@ -33,6 +33,10 @@ from models import Process, Window, Geometry, Click, Keys
 
 SKIP_MODIFIERS = {"", "Shift_L", "Control_L", "Super_L", "Alt_L", "Super_R", "Control_R", "Shift_R", "[65027]"}  # [65027] is AltGr in X for some ungodly reason.
 
+SCROLL_BUTTONS = {4, 5, 6, 7}
+SCROLL_COOLOFF = 10  # seconds
+
+COMMIT_COOLOFF = 60
 
 class Display:
     def __init__(self):
@@ -62,10 +66,16 @@ class ActivityStore:
         
         self.current_window = Display()
 
-        self.last_key_time = time.time()        
+        self.last_scroll = {button: 0 for button in SCROLL_BUTTONS}
+
+        self.last_key_time = time.time()
+        self.last_commit = time.time()
         self.started = NOW()
 
     def trycommit(self):
+        if time.time() - self.last_commit < COMMIT_COOLOFF:
+            return
+        self.last_commit = time.time()
         for _ in xrange(1000):
             try:
                 self.session.commit()
@@ -218,6 +228,11 @@ class ActivityStore:
             Mouse buttons: left: 1, middle: 2, right: 3, scroll up: 4, down:5, left:6, right:7
             x,y are the coordinates of the keypress
             press is True if it pressed down, False if released"""
+        if button in [4, 5, 6, 7]:
+            if time.time() - self.last_scroll[button] < SCROLL_COOLOFF:
+                return
+            self.last_scroll[button] = time.time()
+                            
         self.store_click(button, x, y)
 
     def got_mouse_move(self, x, y):

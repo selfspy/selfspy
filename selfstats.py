@@ -327,8 +327,8 @@ class Selfstats:
         keys = Counter()
         for row in self.filter_keys():
             d = {'nr': 1,
-                 'keystrokes': row.nrkeys}
-
+                 'keystrokes': len(row.load_timings())}
+            
             if self.need_activity:
                 timings = create_times(row)
             if self.need_process:

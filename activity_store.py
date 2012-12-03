@@ -36,6 +36,7 @@ SKIP_MODIFIERS = {"", "Shift_L", "Control_L", "Super_L", "Alt_L", "Super_R", "Co
 SCROLL_BUTTONS = {4, 5, 6, 7}
 SCROLL_COOLOFF = 10  # seconds
 
+
 class Display:
     def __init__(self):
         self.proc_id = None

@@ -59,4 +59,3 @@ class Period:
 
     def calc_total(self):
         return sum(t2 - t1 for t1, t2 in self.times)
-

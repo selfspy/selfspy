@@ -21,24 +21,30 @@ import getpass
 from Tkinter import Tk
 import tkSimpleDialog
 
-
-def get_password(verify=None):
+def get_password(verify=None, message=None):
     if sys.stdin.isatty():
         for i in xrange(3):
-            pw = getpass.getpass()
+            if message:
+                pw = getpass.getpass(message)
+            else:
+                pw = getpass.getpass()
             if (not verify) or verify(pw):
                 break
     else:
-        pw = get_tk_password(verify)
+        pw = get_tk_password(verify, message)
     return pw
-        
 
-def get_tk_password(verify):
+def get_tk_password(verify, message=None):
     root = Tk()
     root.withdraw()
-    
+    if message is None:
+        message = 'Password'
+
     while True:
-        pw = tkSimpleDialog.askstring(title='Selfspy encryption password', prompt='Password', show='*', parent=root)
+        pw = tkSimpleDialog.askstring(title='Selfspy encryption password',
+                                      prompt=message,
+                                      show='*',
+                                      parent=root)
 
         if pw is None:
             return ""
@@ -46,7 +52,7 @@ def get_tk_password(verify):
         if (not verify) or verify(pw):
             break
     return pw
-        
+
 
 if __name__ == '__main__':
     print get_password()

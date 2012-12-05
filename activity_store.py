@@ -242,3 +242,12 @@ class ActivityStore:
         self.sniffer.cancel()
         self.store_keys()
 
+    def change_password(self, new_encrypter):
+        self.session = self.session_maker()
+        keys = self.session.query(Keys).all()
+        for k in keys:
+            dtext = k.decrypt_text()
+            dkeys = k.decrypt_keys()
+            k.encrypt_text(dtext, new_encrypter)
+            k.encrypt_keys(dkeys, new_encrypter)
+        self.session.commit()

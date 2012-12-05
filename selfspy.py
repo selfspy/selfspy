@@ -60,6 +60,8 @@ def parse_config():
 
     parser.add_argument('-n', '--no-text', action='store_true', help='Do not store what you type. This will make your database smaller and less sensitive to security breaches. Process name, window titles, window geometry, mouse clicks, number of keys pressed and key timings will still be stored, but not the actual letters. Key timings are stored to enable activity calculation in selfstats.py. If this switch is used, you will never be asked for password.')
 
+    parser.add_argument('--change-password', action="store_true", help='Change the password used to encrypt the keys columns and exit.')
+
     return parser.parse_args()
 
 
@@ -77,7 +79,7 @@ if __name__ == '__main__':
 
     def check_with_encrypter(password):
         encrypter = make_encrypter(password)
-        return check_password.check(args['data_dir'], encrypter) 
+        return check_password.check(args['data_dir'], encrypter)
 
     try:
         os.makedirs(args['data_dir'])
@@ -115,9 +117,25 @@ if __name__ == '__main__':
         print 'Password failed'
         sys.exit(1)
 
-    astore = ActivityStore(os.path.join(args['data_dir'], DBNAME), 
-                           encrypter, store_text=(not args['no_text']))
-                        
+    if args['change_password']:
+        new_password = get_password(message="New Password: ")
+        new_encrypter = make_encrypter(new_password)
+        print 'Re-encrypting your keys...'
+        astore = ActivityStore(os.path.join(args['data_dir'], DBNAME),
+                               encrypter,
+                               store_text=(not args['no_text']))
+        astore.change_password(new_encrypter)
+        # delete the old password.digest
+        os.remove(os.path.join(args['data_dir'], check_password.DIGEST_NAME))
+        check_password.check(args['data_dir'], new_encrypter)
+        # don't assume we want the logger to run afterwards
+        print 'Exiting...'
+        sys.exit(0)
+
+    astore = ActivityStore(os.path.join(args['data_dir'], DBNAME),
+                             encrypter,
+                           store_text=(not args['no_text']))
+
     try:
         astore.run()
     except SystemExit:

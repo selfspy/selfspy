@@ -137,7 +137,7 @@ def make_time_string(dates, clock):
 
 def make_period(q, period, who, start, prop):
     if len(period) < 1 or len(period) > 2:
-        print '%s needs one or two arguments, not %d.' % (who, len(period)), period
+        print('%s needs one or two arguments, not %d.' % (who, len(period)), period)
         sys.exit(1)
 
     d = {}
@@ -534,4 +534,3 @@ if __name__ == '__main__':
             sys.exit(1)
 
     ss.do()
-

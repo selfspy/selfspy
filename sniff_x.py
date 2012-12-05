@@ -195,3 +195,4 @@ class SniffX:
             except XError:
                 i += 1
         return geo
+

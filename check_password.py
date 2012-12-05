@@ -40,4 +40,3 @@ def check(data_dir, decrypter, read_only=False):
                 f.write(s)
                 f.close()
         return True
-    

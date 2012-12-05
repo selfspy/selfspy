@@ -182,7 +182,10 @@ class SniffX:
                         cur_window = cur_window.query_tree().parent
             except XError:
                 i += 1
+                continue
             break
+        cur_class = cur_class or ''
+        cur_name = cur_name or ''
         return cur_class.decode('latin1'), cur_window, cur_name.decode('latin1')
 
     def get_geometry(self, cur_window):

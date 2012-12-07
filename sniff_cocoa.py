@@ -40,16 +40,16 @@ class SniffCocoa:
 
     def createAppDelegate(self):
         sc = self
-        
+
         class AppDelegate(NSObject):
             def applicationDidFinishLaunching_(self, notification):
-                mask = (NSKeyDownMask 
+                mask = (NSKeyDownMask
                         | NSKeyUpMask
-                        | NSLeftMouseDownMask 
+                        | NSLeftMouseDownMask
                         | NSLeftMouseUpMask
-                        | NSRightMouseDownMask 
+                        | NSRightMouseDownMask
                         | NSRightMouseUpMask
-                        | NSMouseMovedMask 
+                        | NSMouseMovedMask
                         | NSScrollWheelMask
                         | NSFlagsChangedMask)
                 NSEvent.addGlobalMonitorForEventsMatchingMask_handler_(mask, sc.handler)
@@ -64,7 +64,7 @@ class SniffCocoa:
 
     def cancel(self):
         AppHelper.stopEventLoop()
-    
+
     def handler(self, event):
         try:
             activeApps = self.workspace.runningApplications()
@@ -72,19 +72,19 @@ class SniffCocoa:
             #right now the check is done for everything.
             for app in activeApps:
                 if app.isActive():
-                    options = kCGWindowListOptionOnScreenOnly 
+                    options = kCGWindowListOptionOnScreenOnly
                     windowList = CGWindowListCopyWindowInfo(options,
                                                             kCGNullWindowID)
                     for window in windowList:
-                        if (window['kCGWindowNumber'] == event.windowNumber() 
+                        if (window['kCGWindowNumber'] == event.windowNumber()
                             or (not event.windowNumber()
                                 and window['kCGWindowOwnerName'] == app.localizedName())):
-                            geometry = window['kCGWindowBounds'] 
+                            geometry = window['kCGWindowBounds']
                             self.screen_hook(window['kCGWindowOwnerName'],
                                              window.get('kCGWindowName', u''),
-                                             geometry['X'], 
-                                             geometry['Y'], 
-                                             geometry['Width'], 
+                                             geometry['X'],
+                                             geometry['Y'],
+                                             geometry['Width'],
                                              geometry['Height'])
                             break
                     break
@@ -128,15 +128,19 @@ class SniffCocoa:
                 if event.keyCode() is 36:
                     character = "Enter"
                 elif event.keyCode() is 51:
-                    character = "Backspace"                    
-                self.key_hook(event.keyCode(), 
+                    character = "Backspace"
+                self.key_hook(event.keyCode(),
                               modifiers,
                               keycodes.get(character,
                                            character),
                               event.isARepeat())
             elif event.type() == NSMouseMoved:
                 self.mouse_move_hook(loc.x, loc.y)
-        except (Exception, KeyboardInterrupt):
+        except (SystemExit, KeyboardInterrupt):
+            AppHelper.stopEventLoop()
+            print "Exiting ..."
+            return
+        except:
             AppHelper.stopEventLoop()
             raise
 

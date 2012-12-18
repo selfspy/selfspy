@@ -2,4 +2,5 @@ SQLAlchemy==0.7.6
 lockfile==0.9.1
 pycrypto==2.5
 python-daemon==1.6
-python-xlib
+svn+https://python-xlib.svn.sourceforge.net/svnroot/python-xlib/tags/xlib_0_15rc1/
+

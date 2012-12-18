@@ -5,10 +5,10 @@ if platform.system() == 'Darwin':
     req_file = 'osx-requirements.txt'
 else:
     req_file = 'requirements.txt'
-    #dep_link = ['svn+https://python-xlib.svn.sourceforge.net/svnroot/python-xlib/tags/xlib_0_15rc1/#egg=pyxlib']
+    dep_link = ['http://python-xlib.svn.sourceforge.net/viewvc/python-xlib/tags/xlib_0_15rc1/?view=tar#egg=pyxlib']
 
 with open(os.path.join(os.path.dirname(__file__), req_file)) as f:
-    requires = ['pyxlib' if 'python-xlib7' in s else s for s in f.readlines()]
+    requires = ['pyxlib' if 'python-xlib' in s else s for s in f.readlines()]
     
 
 print '"%s"' % requires

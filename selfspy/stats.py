@@ -370,17 +370,12 @@ class Selfstats:
 
         if self.need_activity:
             act = self.summary.get('activity')
-<<<<<<< HEAD:selfstats.py
+
             if act:
                 act = act.calc_total()
             else:
                 act = 0
             print 'Total time active:', 
-=======
-            if act: act = act.calc_total()
-            else: act = 0
-            print 'Total time active:',
->>>>>>> marksteve/master:selfspy/stats.py
             print pretty_seconds(act)
             print
 
@@ -512,6 +507,7 @@ def parse_config():
 
     return parser.parse_args()
 
+
 def main():
     args = vars(parse_config())
 
@@ -525,12 +521,7 @@ def main():
         except ValueError:
             print 'First argument to --limit must be an integer'
             sys.exit(1)
-<<<<<<< HEAD:selfstats.py
-        
-=======
 
-
->>>>>>> marksteve/master:selfspy/stats.py
     if ss.need_text or ss.need_keys:
         if args['password'] is None:
             args['password'] = get_password()
@@ -545,10 +536,7 @@ def main():
             sys.exit(1)
 
     ss.do()
-<<<<<<< HEAD:selfstats.py
-=======
-
 
 if __name__ == '__main__':
     main()
->>>>>>> marksteve/master:selfspy/stats.py
+

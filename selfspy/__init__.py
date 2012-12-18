@@ -118,7 +118,6 @@ def main():
         print 'Password failed'
         sys.exit(1)
 
-<<<<<<< HEAD:selfspy.py
     if args['change_password']:
         new_password = get_password(message="New Password: ")
         new_encrypter = make_encrypter(new_password)
@@ -135,12 +134,8 @@ def main():
         sys.exit(0)
 
     astore = ActivityStore(os.path.join(args['data_dir'], DBNAME),
-                             encrypter,
+                           encrypter,
                            store_text=(not args['no_text']))
-=======
-    astore = ActivityStore(os.path.join(args['data_dir'], DBNAME),
-                           encrypter, store_text=(not args['no_text']))
->>>>>>> marksteve/master:selfspy/__init__.py
 
     try:
         astore.run()

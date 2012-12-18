@@ -65,14 +65,11 @@ class ActivityStore:
 
         self.current_window = Display()
 
-<<<<<<< HEAD:activity_store.py
         self.last_scroll = {button: 0 for button in SCROLL_BUTTONS}
 
         self.last_key_time = time.time()
         self.last_commit = time.time()
-=======
-        self.last_key_time = time.time()
->>>>>>> marksteve/master:selfspy/activity_store.py
+
         self.started = NOW()
 
     def trycommit(self):

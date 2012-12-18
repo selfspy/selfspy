@@ -2,7 +2,6 @@ SQLAlchemy==0.7.6
 lockfile==0.9.1
 pycrypto==2.5
 python-daemon==1.6
+pyobjc-core==2.4
 pyobjc==2.4
-pyobjc-framework-Cocoa==2.4
-pyobjc-framework-Quartz==2.4
-pyobjc-framework-CoreData==2.4
+

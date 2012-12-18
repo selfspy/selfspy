@@ -11,7 +11,7 @@ from setuptools import setup
 
 
 setup(name="selfspy",
-      # version='0.0.0',
+      version='0.3.0',
       packages=['selfspy'],
       author="David Fendrich",
       # author_email='',

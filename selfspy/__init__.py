@@ -23,8 +23,7 @@ import sys
 import argparse
 import ConfigParser
 
-import daemon
-import lockfile
+mport lockfile
 import signal
 
 import hashlib
@@ -94,17 +93,6 @@ def main():
         print 'If you can find no selfspy process running, it is a stale lock and you can safely remove it.'
         print 'Shutting down.'
         sys.exit(1)
-
-    context = daemon.DaemonContext(
-        working_directory=args['data_dir'],
-        pidfile=lock,
-        stderr=sys.stderr
-    )
-
-    context.signal_map = {
-        signal.SIGTERM: 'terminate',
-        signal.SIGHUP: 'terminate'
-    }
 
     if args['no_text']:
         args['password'] = ""

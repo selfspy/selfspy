@@ -23,7 +23,7 @@ import sys
 import argparse
 import ConfigParser
 
-mport lockfile
+import lockfile
 import signal
 
 import hashlib

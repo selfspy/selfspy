@@ -26,7 +26,8 @@ from Cocoa import (NSEvent,
                    NSScrollWheel, NSScrollWheelMask,
                    NSFlagsChanged, NSFlagsChangedMask,
                    NSAlternateKeyMask, NSCommandKeyMask, NSControlKeyMask,
-                   NSShiftKeyMask, NSAlphaShiftKeyMask)
+                   NSShiftKeyMask, NSAlphaShiftKeyMask,
+                   NSApplicationActivationPolicyProhibited)
 from Quartz import CGWindowListCopyWindowInfo, kCGWindowListOptionOnScreenOnly, kCGNullWindowID
 from PyObjCTools import AppHelper
 
@@ -59,6 +60,7 @@ class SniffCocoa:
         NSApplication.sharedApplication()
         delegate = self.createAppDelegate().alloc().init()
         NSApp().setDelegate_(delegate)
+        NSApp().setActivationPolicy_(NSApplicationActivationPolicyProhibited)
         self.workspace = NSWorkspace.sharedWorkspace()
         AppHelper.runEventLoop()
 

@@ -3,4 +3,5 @@ lockfile==0.9.1
 pycrypto==2.5
 python-daemon==1.6
 svn+https://python-xlib.svn.sourceforge.net/svnroot/python-xlib/tags/xlib_0_15rc1/
+keyring==1.2.2
 

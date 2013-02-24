@@ -331,7 +331,7 @@ class Selfstats:
         for row in self.filter_keys():
             d = {'nr': 1,
                  'keystrokes': len(row.load_timings())}
-            
+
             if self.need_activity:
                 timings = create_times(row)
             if self.need_process:
@@ -508,10 +508,22 @@ def parse_config():
     return parser.parse_args()
 
 
+def make_encrypter(password):
+    if password == "":
+        encrypter = None
+    else:
+        encrypter = Blowfish.new(hashlib.md5(password).digest())
+    return encrypter
+
+
 def main():
     args = vars(parse_config())
 
     args['data_dir'] = os.path.expanduser(args['data_dir'])
+
+    def check_with_encrypter(password):
+        encrypter = make_encrypter(password)
+        return check_password.check(args['data_dir'], encrypter, read_only=True)
 
     ss = Selfstats(os.path.join(args['data_dir'], DBNAME), args)
 
@@ -524,12 +536,9 @@ def main():
 
     if ss.need_text or ss.need_keys:
         if args['password'] is None:
-            args['password'] = get_password()
+            args['password'] = get_password(verify=check_with_encrypter)
 
-        if args['password'] == "":
-            models.ENCRYPTER = None
-        else:
-            models.ENCRYPTER = Blowfish.new(hashlib.md5(args['password']).digest())
+        models.ENCRYPTER = make_encrypter(args['password'])
 
         if not check_password.check(args['data_dir'], models.ENCRYPTER, read_only=True):
             print 'Password failed'
@@ -537,6 +546,6 @@ def main():
 
     ss.do()
 
+
 if __name__ == '__main__':
     main()
-

@@ -7,12 +7,16 @@ See Example Statistics, below, for some of the fabulous things you can do with t
 
 ### Installing Selfspy
 
-If you run ArchLinux, here is an AUR package:
+If you run ArchLinux, here is an AUR package which may be up-to-date:
 https://aur.archlinux.org/packages.php?ID=58501
 
 To install manually, either clone the repository from Github (git clone git://github.com/gurgeh/selfspy), or click on the Download link on http://github.com/gurgeh/selfspy/ to get the latest Python source.
 
-Selfspy is only tested with Python 2.7 and has a few dependencies on other Python libraries that need to be satisfied. These are documented in the requirements.txt file. If you have *pip* installed, installing the dependencies is a simple matter of running `pip install -r requirements.txt`. You will need subversion installed for pip to install python-xlib. Python-xlib is currently a tricky package to include in the requirements since it is not on PyPi. Please note that you need v0.14 and NOT 0.15.
+Selfspy is only tested with Python 2.7 and has a few dependencies on other Python libraries that need to be satisfied. These are documented in the requirements.txt file. If you are on Linux, you will need subversion installed for pip to install python-xlib. If you are on Mac, you will not need to install python-xlib at all. Python-xlib is currently a tricky package to include in the requirements since it is not on PyPi.
+```
+pip install svn+https://python-xlib.svn.sourceforge.net/svnroot/python-xlib/tags/xlib_0_15rc1/ # Only do this step on Linux!
+python setup.py install
+```
 
 There is also a simple Makefile. Run `make install` as root/sudo, to install the files in /var/lib/selfspy and also create the symlinks /usr/bin/selfspy and /usr/bin/selfstats.
 

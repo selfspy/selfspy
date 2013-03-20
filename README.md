@@ -73,6 +73,13 @@ Unless you use the --no-text flag, selfspy will store everything you type in two
 
 Normally you would like Selfspy to start automatically when you launch X. How to do this depends on your system, but it will normally mean editing *~/.xinitrc* or *~/.xsession*. If you run KDE, *~/.kde/Autostart*, is a good place to put startup scripts. When run, Selfspy will immediately spawn a daemon and exit.
 
+#### Running on login in OS X
+If you want selfspy to start automatically on login you need to copy the [com.github.gurgeh.selfspy.plist](https://github.com/gurgeh/selfspy/raw/master/com.github.gurgeh.selfspy.plist)
+file to `~/Library/LaunchAgents/` or run
+```
+curl https://github.com/gurgeh/selfspy/raw/master/com.github.gurgeh.selfspy.plist > ~/Library/LaunchAgents/com.github.selfspy.plist
+```
+
 ### Example Statistics
 *"OK, so now all this data will be stored, but what can I use it for?"*
 

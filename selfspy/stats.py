@@ -301,7 +301,7 @@ class Selfstats:
             rows += 1
             print row.id, row.started, pretty_seconds((row.created_at - row.started).total_seconds()), row.process.name, '"%s"' % row.window.title, row.nrkeys,
             if self.args['showtext']:
-                print row.decrypt_text()
+                print row.decrypt_text().decode('utf8')
             else:
                 print
         print rows, 'rows'

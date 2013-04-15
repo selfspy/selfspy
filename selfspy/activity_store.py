@@ -24,6 +24,8 @@ import sqlalchemy
 import platform
 if platform.system() == 'Darwin':
     from selfspy import sniff_cocoa
+elif platform.system() == 'Windows':
+    from selfspy import sniff_win
 else:
     from selfspy import sniff_x
 
@@ -80,12 +82,16 @@ class ActivityStore:
                 break
             except sqlalchemy.exc.OperationalError:
                 time.sleep(1)
+            except:
+               self.session.rollback()
 
     def run(self):
         self.session = self.session_maker()
 
         if platform.system() == 'Darwin':
             self.sniffer = sniff_cocoa.SniffCocoa()
+        if platform.system() == "Windows":
+            self.sniffer = sniff_win.SniffWIN()
         else:
             self.sniffer = sniff_x.SniffX()
         self.sniffer.screen_hook = self.got_screen_change

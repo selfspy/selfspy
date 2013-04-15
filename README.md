@@ -3,8 +3,19 @@ Selfspy is a daemon for Unix/X11 and (thanks to @ljos!) Mac OS X, that continuou
 
 See Example Statistics, below, for some of the fabulous things you can do with this data.
 
-*If you are a Windows programmer, I think that it would be fairly easy to get Selfspy to run there too, by creating an alternative to sniff_x.py and sniff_cocoa.py. If anyone wants to experiment with that, I look forward to your patches.*
+Windows
 
+Due too Windows libs needing a external compiler to compile libs, some libs won't compile on all computers.   
+These are the sinners*:   
+`pyHook==1.5.1`   
+`pyCrypto==2.5 `   
+They are added too the windows-requirements.txt, but IF you fail to build these libs, here are the precompiled binaries. pyWin32 is needed for some library dependency, pip can't install pyWin32, so please use the binary below.      
+pyHook: http://sourceforge.net/projects/pyhook/files/pyhook/   
+pyCrytpo: http://www.voidspace.org.uk/python/modules.shtml#pycrypto   
+pyWin32: http://sourceforge.net/projects/pywin32/files/pywin32/  
+  
+*SQLAlchemy does compile without the external compiler, but it uses a clean Python version which might slow things down.  
+   
 ### Installing Selfspy
 
 If you run ArchLinux, here is an AUR package which may be up-to-date:

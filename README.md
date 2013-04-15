@@ -3,7 +3,7 @@ Selfspy is a daemon for Unix/X11 and (thanks to @ljos!) Mac OS X, that continuou
 
 See Example Statistics, below, for some of the fabulous things you can do with this data.
 
-Windows
+### Windows
 
 Due too Windows libs needing a external compiler to compile libs, some libs won't compile on all computers.   
 These are the sinners*:   

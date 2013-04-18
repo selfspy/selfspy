@@ -4,6 +4,8 @@ import platform
 # dep_link = []
 if platform.system() == 'Darwin':
     req_file = 'osx-requirements.txt'
+if platform.system() == "Windows":
+    req_file = "win-requirements.txt"
 else:
     req_file = 'requirements.txt'
     #dep_link = ['http://python-xlib.svn.sourceforge.net/viewvc/python-xlib/tags/xlib_0_15rc1/?view=tar#egg=pyxlib']

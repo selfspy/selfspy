@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*- 
+# -*- coding: utf-8 -*-
 # Copyright 2012 Morten Linderud
 
 # This file is part of Selfspy
@@ -20,7 +20,7 @@ import pyHook
 import pythoncom
 import sys
 
-class SniffWIN:
+class Sniffer:
     """Winning!"""
     def __init__(self):
         self.encoding = sys.stdin.encoding
@@ -36,7 +36,7 @@ class SniffWIN:
                 229: u"\xe5",
                 197: u"\xc5"
                 }
-    
+
     def run(self):
         try:
             self.hm = pyHook.HookManager()
@@ -51,7 +51,7 @@ class SniffWIN:
             self.hm.UnhookMouse()
             sys.exit(0)
             return 0
-    
+
     def cancle(self):
         self.hm.UnhookKeyboard()
         sys.exit()
@@ -71,7 +71,7 @@ class SniffWIN:
         self.screen_hook(str(event.Window), string_event, loc[0], loc[1], 0, 0)
         return True
 
-    def MouseMove(self, event):      
+    def MouseMove(self, event):
         loc = event.Position
         if event.MessageName == "mouse move":
             self.mouse_move_hook(loc[0], loc[1])
@@ -81,7 +81,7 @@ class SniffWIN:
             elif event.Wheel == 1:
                 self.mouse_button_hook(4, loc[0], loc[1],)
         return True
-    
+
     def KeyboardEvent(self, event):
         modifiers = []
         if event.Key in ["Lshift", "Rshift"]:

@@ -31,8 +31,7 @@ from Cocoa import (NSEvent,
 from Quartz import CGWindowListCopyWindowInfo, kCGWindowListOptionOnScreenOnly, kCGNullWindowID
 from PyObjCTools import AppHelper
 
-
-class SniffCocoa:
+class Sniffer:
     def __init__(self):
         self.key_hook = lambda x: True
         self.mouse_button_hook = lambda x: True

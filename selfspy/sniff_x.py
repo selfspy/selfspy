@@ -36,24 +36,24 @@ def state_to_idx(state):  # this could be a dict, but I might want to extend it.
     return 0
 
 
-class SniffX:
+class Sniffer:
     def __init__(self):
         self.keysymdict = {}
         for name in dir(XK):
             if name.startswith("XK_"):
                 self.keysymdict[getattr(XK, name)] = name[3:]
-        
+
         self.key_hook = lambda x: True
         self.mouse_button_hook = lambda x: True
         self.mouse_move_hook = lambda x: True
         self.screen_hook = lambda x: True
 
         self.contextEventMask = [X.KeyPress, X.MotionNotify]
-        
+
         self.the_display = display.Display()
         self.record_display = display.Display()
         self.keymap = self.the_display._keymap_codes
-        
+
     def run(self):
         # Check if the extension is present
         if not self.record_display.has_extension("RECORD"):
@@ -87,7 +87,7 @@ class SniffX:
     def cancel(self):
         self.the_display.record_disable_context(self.ctx)
         self.the_display.flush()
-    
+
     def processevents(self, reply):
         if reply.category != record.FromServer:
             return
@@ -102,8 +102,8 @@ class SniffX:
         if cur_class:
             cur_geo = self.get_geometry(cur_window)
             if cur_geo:
-                self.screen_hook(cur_class, 
-                                 cur_name, 
+                self.screen_hook(cur_class,
+                                 cur_name,
                                  cur_geo.x,
                                  cur_geo.y,
                                  cur_geo.width,
@@ -113,7 +113,7 @@ class SniffX:
         while len(data):
             ef = rq.EventField(None)
             event, data = ef.parse_binary_value(data, self.record_display.display, None, None)
-            if event.type in [X.KeyPress]: 
+            if event.type in [X.KeyPress]:
                 # X.KeyRelease, we don't log this anyway
                 self.key_hook(*self.key_event(event))
             elif event.type in [X.ButtonPress]:
@@ -125,7 +125,7 @@ class SniffX:
                 self.the_display.refresh_keyboard_mapping()
                 newkeymap = self.the_display._keymap_codes
                 print 'Change keymap!', newkeymap == self.keymap
-                self.keymap = newkeymap   
+                self.keymap = newkeymap
 
     def get_key_name(self, keycode, state):
         state_idx = state_to_idx(state)
@@ -146,11 +146,11 @@ class SniffX:
             modifiers.append('Super')
         if flags & X.ShiftMask:
             modifiers.append('Shift')
-        return (event.detail, 
+        return (event.detail,
                 modifiers,
                 self.get_key_name(event.detail, event.state),
                 event.sequence_number == 1)
-    
+
     def button_event(self, event):
         return event.detail, event.root_x, event.root_y
 
@@ -172,7 +172,7 @@ class SniffX:
                 while cur_class is None:
                     if type(cur_window) is int:
                         return None, None, None
-            
+
                     cur_name = cur_window.get_wm_name()
                     cur_class = cur_window.get_wm_class()
 
@@ -198,4 +198,3 @@ class SniffX:
             except XError:
                 i += 1
         return geo
-

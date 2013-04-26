@@ -23,11 +23,11 @@ import sqlalchemy
 
 import platform
 if platform.system() == 'Darwin':
-    from selfspy import sniff_cocoa
+    from selfspy import sniff_cocoa as sniffer
 elif platform.system() == 'Windows':
-    from selfspy import sniff_win
+    from selfspy import sniff_win as sniffer
 else:
-    from selfspy import sniff_x
+    from selfspy import sniff_x as sniffer
 
 from selfspy import models
 from selfspy.models import Process, Window, Geometry, Click, Keys
@@ -88,12 +88,7 @@ class ActivityStore:
     def run(self):
         self.session = self.session_maker()
 
-        if platform.system() == 'Darwin':
-            self.sniffer = sniff_cocoa.SniffCocoa()
-        if platform.system() == "Windows":
-            self.sniffer = sniff_win.SniffWIN()
-        else:
-            self.sniffer = sniff_x.SniffX()
+        self.sniffer = sniffer.Sniffer()
         self.sniffer.screen_hook = self.got_screen_change
         self.sniffer.key_hook = self.got_key
         self.sniffer.mouse_button_hook = self.got_mouse_click
@@ -236,7 +231,7 @@ class ActivityStore:
             if time.time() - self.last_scroll[button] < SCROLL_COOLOFF:
                 return
             self.last_scroll[button] = time.time()
-                            
+
         self.store_click(button, x, y)
 
     def got_mouse_move(self, x, y):

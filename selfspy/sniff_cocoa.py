@@ -15,7 +15,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Selfspy.  If not, see <http://www.gnu.org/licenses/>.
 
-
 from Foundation import NSObject
 from AppKit import NSApplication, NSApp, NSWorkspace
 from Cocoa import (NSEvent,
@@ -63,6 +62,8 @@ class Sniffer:
                 # pyobc bridge.
                 if cfg.LOCK.is_locked():
                     cfg.LOCK.release()
+                print "Exiting ..."
+
         return AppDelegate
 
     def run(self):
@@ -149,7 +150,6 @@ class Sniffer:
                 self.mouse_move_hook(loc.x, loc.y)
         except (SystemExit, KeyboardInterrupt):
             AppHelper.stopEventLoop()
-            print "Exiting ..."
             return
         except:
             AppHelper.stopEventLoop()

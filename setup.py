@@ -4,7 +4,7 @@ import platform
 # dep_link = []
 if platform.system() == 'Darwin':
     req_file = 'osx-requirements.txt'
-if platform.system() == "Windows":
+elif platform.system() == "Windows":
     req_file = "win-requirements.txt"
 else:
     req_file = 'requirements.txt'
@@ -12,12 +12,10 @@ else:
 
 with open(os.path.join(os.path.dirname(__file__), req_file)) as f:
     requires = list(f.readlines())
-    
 
 print '"%s"' % requires
-    
-from setuptools import setup
 
+from setuptools import setup
 
 setup(name="selfspy",
       version='0.3.0',

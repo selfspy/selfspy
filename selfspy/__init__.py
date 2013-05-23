@@ -124,11 +124,9 @@ def main():
         astore.run()
     except SystemExit:
         astore.close()
-
+    except KeyboardInterrupt:
+        pass
     lock.release()
 
 if __name__ == '__main__':
-    try:
-        main()
-    except KeyboardInterrupt:
-        sys.exit()
+    main()

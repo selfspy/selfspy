@@ -30,6 +30,7 @@ from Cocoa import (NSEvent,
                    NSApplicationActivationPolicyProhibited)
 from Quartz import CGWindowListCopyWindowInfo, kCGWindowListOptionOnScreenOnly, kCGNullWindowID
 from PyObjCTools import AppHelper
+import config as cfg
 
 class Sniffer:
     def __init__(self):
@@ -42,6 +43,7 @@ class Sniffer:
         sc = self
 
         class AppDelegate(NSObject):
+
             def applicationDidFinishLaunching_(self, notification):
                 mask = (NSKeyDownMask
                         | NSKeyUpMask
@@ -53,6 +55,14 @@ class Sniffer:
                         | NSScrollWheelMask
                         | NSFlagsChangedMask)
                 NSEvent.addGlobalMonitorForEventsMatchingMask_handler_(mask, sc.handler)
+
+            def applicationWillTerminate_(self, application):
+                # need to release the lock here as when the
+                # application terminates it does not run the rest the
+                # original main, only the code that has crossed the
+                # pyobc bridge.
+                if cfg.LOCK.is_locked():
+                    cfg.LOCK.release()
         return AppDelegate
 
     def run(self):

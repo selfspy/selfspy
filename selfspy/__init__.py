@@ -82,8 +82,8 @@ def main():
         pass
 
     lockname = os.path.join(args['data_dir'], cfg.LOCK_FILE)
-    lock  = LockFile(lockname)
-    if lock.is_locked():
+    cfg.LOCK  = LockFile(lockname)
+    if cfg.LOCK.is_locked():
         print '%s is locked! I am probably already running.' % lockname
         print 'If you can find no selfspy process running, it is a stale lock and you can safely remove it.'
         print 'Shutting down.'
@@ -119,14 +119,15 @@ def main():
     astore = ActivityStore(os.path.join(args['data_dir'], cfg.DBNAME),
                            encrypter,
                            store_text=(not args['no_text']))
-    lock.acquire()
+    cfg.LOCK.acquire()
     try:
         astore.run()
     except SystemExit:
         astore.close()
     except KeyboardInterrupt:
         pass
-    lock.release()
+    # In OS X this is has to be released in sniff_cocoa
+    cfg.LOCK.release()
 
 if __name__ == '__main__':
     main()

@@ -119,12 +119,13 @@ def main():
     astore = ActivityStore(os.path.join(args['data_dir'], cfg.DBNAME),
                            encrypter,
                            store_text=(not args['no_text']))
-
+    lock.acquire()
     try:
         astore.run()
     except SystemExit:
         astore.close()
 
+    lock.release()
 
 if __name__ == '__main__':
     try:

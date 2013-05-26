@@ -126,7 +126,7 @@ def main():
 
     try:
         astore.run()
-    except SystemExit:
+    except SystemExit:  
         astore.close()
 
 

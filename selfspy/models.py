@@ -124,6 +124,7 @@ def pad(s, padnum):
         return s
     return s + '\0' * (padnum - (ls % padnum))
 
+
 def maybe_encrypt(s, other_encrypter=None):
     if other_encrypter is not None:
         s = pad(s, 8)
@@ -132,6 +133,7 @@ def maybe_encrypt(s, other_encrypter=None):
         s = pad(s, 8)
         s = ENCRYPTER.encrypt(s)
     return s
+
 
 def maybe_decrypt(s, other_encrypter=None):
     if other_encrypter is not None:

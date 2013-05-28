@@ -23,7 +23,7 @@ import sys
 import argparse
 import ConfigParser
 
-import lockfile
+from lockfile import LockFile
 
 import hashlib
 from Crypto.Cipher import Blowfish
@@ -32,11 +32,7 @@ from selfspy.activity_store import ActivityStore
 from selfspy.password_dialog import get_password
 from selfspy import check_password
 
-
-DATA_DIR = '~/.selfspy'
-DBNAME = 'selfspy.sqlite'
-LOCK_FILE = 'selfspy.pid'
-
+import config as cfg
 
 def parse_config():
     conf_parser = argparse.ArgumentParser(description=__doc__, add_help=False,
@@ -54,7 +50,7 @@ def parse_config():
     parser = argparse.ArgumentParser(description='Monitor your computer activities and store them in an encrypted database for later analysis or disaster recovery.', parents=[conf_parser])
     parser.set_defaults(**defaults)
     parser.add_argument('-p', '--password', help='Encryption password. If you want to keep your database unencrypted, specify -p "" here. If you don\'t specify a password in the command line arguments or in a config file, a dialog will pop up, asking for the password. The most secure is to not use either command line or config file but instead type it in on startup.')
-    parser.add_argument('-d', '--data-dir', help='Data directory for selfspy, where the database is stored. Remember that Selfspy must have read/write access. Default is %s' % DATA_DIR, default=DATA_DIR)
+    parser.add_argument('-d', '--data-dir', help='Data directory for selfspy, where the database is stored. Remember that Selfspy must have read/write access. Default is %s' % cfg.DATA_DIR, default=cfg.DATA_DIR)
 
     parser.add_argument('-n', '--no-text', action='store_true', help='Do not store what you type. This will make your database smaller and less sensitive to security breaches. Process name, window titles, window geometry, mouse clicks, number of keys pressed and key timings will still be stored, but not the actual letters. Key timings are stored to enable activity calculation in selfstats. If this switch is used, you will never be asked for password.')
 
@@ -85,9 +81,9 @@ def main():
     except OSError:
         pass
 
-    lockname = os.path.join(args['data_dir'], LOCK_FILE)
-    lock = lockfile.FileLock(lockname)
-    if lock.is_locked():
+    lockname = os.path.join(args['data_dir'], cfg.LOCK_FILE)
+    cfg.LOCK  = LockFile(lockname)
+    if cfg.LOCK.is_locked():
         print '%s is locked! I am probably already running.' % lockname
         print 'If you can find no selfspy process running, it is a stale lock and you can safely remove it.'
         print 'Shutting down.'
@@ -109,7 +105,7 @@ def main():
         new_password = get_password(message="New Password: ")
         new_encrypter = make_encrypter(new_password)
         print 'Re-encrypting your keys...'
-        astore = ActivityStore(os.path.join(args['data_dir'], DBNAME),
+        astore = ActivityStore(os.path.join(args['data_dir'], cfg.DBNAME),
                                encrypter,
                                store_text=(not args['no_text']))
         astore.change_password(new_encrypter)
@@ -120,18 +116,18 @@ def main():
         print 'Exiting...'
         sys.exit(0)
 
-    astore = ActivityStore(os.path.join(args['data_dir'], DBNAME),
+    astore = ActivityStore(os.path.join(args['data_dir'], cfg.DBNAME),
                            encrypter,
                            store_text=(not args['no_text']))
-
+    cfg.LOCK.acquire()
     try:
         astore.run()
     except SystemExit:
         astore.close()
-
+    except KeyboardInterrupt:
+        pass
+    # In OS X this is has to be released in sniff_cocoa
+    cfg.LOCK.release()
 
 if __name__ == '__main__':
-    try:
-        main()
-    except KeyboardInterrupt:
-        sys.exit()
+    main()

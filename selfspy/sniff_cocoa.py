@@ -15,7 +15,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Selfspy.  If not, see <http://www.gnu.org/licenses/>.
 
-
 from Foundation import NSObject
 from AppKit import NSApplication, NSApp, NSWorkspace
 from Cocoa import (NSEvent,
@@ -30,6 +29,7 @@ from Cocoa import (NSEvent,
                    NSApplicationActivationPolicyProhibited)
 from Quartz import CGWindowListCopyWindowInfo, kCGWindowListOptionOnScreenOnly, kCGNullWindowID
 from PyObjCTools import AppHelper
+import config as cfg
 
 class Sniffer:
     def __init__(self):
@@ -42,6 +42,7 @@ class Sniffer:
         sc = self
 
         class AppDelegate(NSObject):
+
             def applicationDidFinishLaunching_(self, notification):
                 mask = (NSKeyDownMask
                         | NSKeyUpMask
@@ -53,6 +54,16 @@ class Sniffer:
                         | NSScrollWheelMask
                         | NSFlagsChangedMask)
                 NSEvent.addGlobalMonitorForEventsMatchingMask_handler_(mask, sc.handler)
+
+            def applicationWillTerminate_(self, application):
+                # need to release the lock here as when the
+                # application terminates it does not run the rest the
+                # original main, only the code that has crossed the
+                # pyobc bridge.
+                if cfg.LOCK.is_locked():
+                    cfg.LOCK.release()
+                print "Exiting ..."
+
         return AppDelegate
 
     def run(self):
@@ -139,7 +150,6 @@ class Sniffer:
                 self.mouse_move_hook(loc.x, loc.y)
         except (SystemExit, KeyboardInterrupt):
             AppHelper.stopEventLoop()
-            print "Exiting ..."
             return
         except:
             AppHelper.stopEventLoop()

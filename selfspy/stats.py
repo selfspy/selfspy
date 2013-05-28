@@ -31,7 +31,8 @@ from collections import Counter
 from Crypto.Cipher import Blowfish
 import hashlib
 
-from selfspy import DATA_DIR, DBNAME
+import config as cfg
+
 from selfspy import check_password
 from selfspy.password_dialog import get_password
 from selfspy.period import Period
@@ -375,7 +376,7 @@ class Selfstats:
                 act = act.calc_total()
             else:
                 act = 0
-            print 'Total time active:', 
+            print 'Total time active:',
             print pretty_seconds(act)
             print
 
@@ -470,7 +471,7 @@ def parse_config():
     parser = argparse.ArgumentParser(description="""Calculate statistics on selfspy data. Per default it will show non-text information that matches the filter. Adding '-s' means also show text. Adding any of the summary options will show those summaries over the given filter instead of the listing. Multiple summary options can be given to print several summaries over the same filter. If you give arguments that need to access text / keystrokes, you will be asked for the decryption password.""", epilog="""See the README file or http://gurgeh.github.com/selfspy for examples.""", parents=[conf_parser])
     parser.set_defaults(**defaults)
     parser.add_argument('-p', '--password', help='Decryption password. Only needed if selfstats needs to access text / keystrokes data. If your database in not encrypted, specify -p="" here. If you don\'t specify a password in the command line arguments or in a config file, and the statistics you ask for require a password, a dialog will pop up asking for the password. If you give your password on the command line, remember that it will most likely be stored in plain text in your shell history.')
-    parser.add_argument('-d', '--data-dir', help='Data directory for selfspy, where the database is stored. Remember that Selfspy must have read/write access. Default is %s' % DATA_DIR, default=DATA_DIR)
+    parser.add_argument('-d', '--data-dir', help='Data directory for selfspy, where the database is stored. Remember that Selfspy must have read/write access. Default is %s' % cfg.DATA_DIR, default=cfg.DATA_DIR)
 
     parser.add_argument('-s', '--showtext', action='store_true', help='Also show the text column. This switch is ignored if at least one of the summary options are used. Requires password.')
 
@@ -525,7 +526,7 @@ def main():
         encrypter = make_encrypter(password)
         return check_password.check(args['data_dir'], encrypter, read_only=True)
 
-    ss = Selfstats(os.path.join(args['data_dir'], DBNAME), args)
+    ss = Selfstats(os.path.join(args['data_dir'], cfg.DBNAME), args)
 
     if args['limit']:
         try:

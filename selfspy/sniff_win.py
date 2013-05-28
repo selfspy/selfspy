@@ -63,7 +63,6 @@ class SnifferThread(threading.Thread):
             string_event = event.WindowName.decode(self.encoding)
         except AttributeError:
             string_event = ""
-        self.old_loc = loc
         self.screen_hook(str(event.Window), string_event, loc[0], loc[1], 0, 0)
         return True
 
@@ -104,7 +103,7 @@ class Sniffer:
         self.key_hook = lambda x: True
         self.mouse_button_hook = lambda x: True
         self.mouse_move_hook = lambda x: True
-        self.screen_hook = lambda x: True
+        self.screen_hook = lambda x: True 
         self.remap = {
                 248: u"\xf8",
                 216: u"\xd8",
@@ -133,5 +132,5 @@ class Sniffer:
         ctypes.windll.user32.PostQuitMessage(0)
         self.hm.UnhookKeyboard()
         self.hm.UnhookMouse()
-        self.thread
+        del self.thread
         del self.hm

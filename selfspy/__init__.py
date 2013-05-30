@@ -122,7 +122,7 @@ def main():
     cfg.LOCK.acquire()
     try:
         astore.run()
-    except SystemExit:
+    except SystemExit:  
         astore.close()
     except KeyboardInterrupt:
         pass

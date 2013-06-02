@@ -107,7 +107,7 @@ class Sniffer:
 #           elif event.type() == NSLeftMouseUp:
 #               self.mouse_button_hook(1, loc.x, loc.y)
             elif event.type() == NSRightMouseDown:
-                self.mouse_button_hook(3, loc.x, loc.y,)
+                self.mouse_button_hook(3, loc.x, loc.y)
 #           elif event.type() == NSRightMouseUp:
 #               self.mouse_button_hook(2, loc.x, loc.y)
             elif event.type() == NSScrollWheel:

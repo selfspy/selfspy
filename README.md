@@ -91,7 +91,7 @@ Normally you would like Selfspy to start automatically when you launch X. How to
 If you want selfspy to start automatically on login you need to copy the [com.github.gurgeh.selfspy.plist](https://github.com/gurgeh/selfspy/raw/master/com.github.gurgeh.selfspy.plist)
 file to `~/Library/LaunchAgents/` or run
 ```
-curl https://github.com/gurgeh/selfspy/raw/master/com.github.gurgeh.selfspy.plist > ~/Library/LaunchAgents/com.github.selfspy.plist
+curl https://raw.github.com/gurgeh/selfspy/master/com.github.gurgeh.selfspy.plist > ~/Library/LaunchAgents/com.github.selfspy.plist
 ```
 
 ### Example Statistics

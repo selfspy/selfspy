@@ -5,7 +5,7 @@ See Example Statistics, below, for some of the fabulous things you can do with t
 
 ### Windows
 
-Due too Windows libs needing a external compiler to compile libs, some libs won't compile on all computers.   
+Due to Windows libs needing a external compiler to compile libs, some libs won't compile on all computers.   
 These are the sinners*:   
 `pyHook==1.5.1`   
 `pyCrypto==2.5 `   

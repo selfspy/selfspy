@@ -29,6 +29,20 @@ pip install svn+https://python-xlib.svn.sourceforge.net/svnroot/python-xlib/tags
 python setup.py install
 ```
 
+You will also need the ``Tkinter`` python libraries. On ubuntu and debian
+
+```
+sudo apt-get install python-tk
+```
+
+On FreeBSD
+
+```
+cd /usr/ports/x11-toolkits/py-tkinter/
+sudo make config-recursive && sudo make install clean
+```
+
+
 There is also a simple Makefile. Run `make install` as root/sudo, to install the files in /var/lib/selfspy and also create the symlinks /usr/bin/selfspy and /usr/bin/selfstats.
 
 Report issues here:

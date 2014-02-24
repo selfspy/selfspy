@@ -53,7 +53,7 @@ http://ost.io/gurgeh/selfspy
 
 #### OS X
 In OS X you also need to enable access for assistive devices.
-To do that in <10.9 there is a checkbox in `System Preferences > Accessibility`,
+To do that in &lt;10.9 there is a checkbox in `System Preferences > Accessibility`,
 in 10.9 you have to add the correct application in
 `System Preferences > Privacy > Accessability`.
 

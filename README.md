@@ -93,6 +93,8 @@ optional arguments:
                         letters. Key timings are stored to enable activity
                         calculation in selfstats. If this switch is used,
                         you will never be asked for password.
+  -r, --no-repeat       Do not store special characters as repeated
+                        characters.
   --change-password     Change the password used to encrypt the keys columns
                         and exit.
 ```

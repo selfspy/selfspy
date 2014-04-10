@@ -17,6 +17,7 @@
 
 import zlib
 import json
+import re
 
 import datetime
 
@@ -187,9 +188,30 @@ class Keys(SpookMixin, Base):
     def decrypt_text(self):
         return maybe_decrypt(self.text)
 
+    def decrypt_humanreadable(self):
+        return self.to_humanreadable(self.decrypt_text())
+
     def decrypt_keys(self):
         keys = maybe_decrypt(self.keys)
         return json.loads(zlib.decompress(keys))
+
+    def to_humanreadable(self, text):
+        backrex = re.compile("\<\[Backspace\]x?(\d+)?\>",re.IGNORECASE)
+        matches = backrex.search(text)
+        while matches is not None:
+            backspaces = matches.group(1)
+            try:
+                deletechars = int(backspaces)
+            except TypeError:
+                deletechars = 1
+
+            newstart = matches.start() - deletechars
+            if newstart < 0:
+                newstart = 0
+
+            text = (text[:newstart] + text[matches.end():])
+            matches = backrex.search(text)
+        return text
 
     def load_timings(self):
         return json.loads(zlib.decompress(self.timings))

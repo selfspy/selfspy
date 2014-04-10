@@ -188,6 +188,7 @@ class Selfstats:
         self.need_activity = False
         self.need_timings = False
         self.need_keys = False
+        self.need_humanreadable = False
         self.need_summary = False
         self.need_process = any(self.args[k] for k in PROCESS_ACTIONS)
         self.need_window = any(self.args[k] for k in WINDOW_ACTIONS)
@@ -205,6 +206,8 @@ class Selfstats:
             self.need_timings = True
         if self.args['key_freqs']:
             self.need_keys = True
+        if self.args['human_readable']:
+            self.need_humanreadable = True
 
         if any(self.args[k] for k in SUMMARY_ACTIONS):
             self.need_summary = True
@@ -273,7 +276,10 @@ class Selfstats:
                 print 'Error in regular expression', str(e)
                 sys.exit(1)
             for x in q.all():
-                body = x.decrypt_text()
+                if(self.need_humanreadable):
+                    body = x.decrypt_humanreadable()
+                else:
+                    body = x.decrypt_text()
                 if bodrex.search(body):
                     yield x
         else:
@@ -293,7 +299,9 @@ class Selfstats:
         fkeys = self.filter_keys()
         rows = 0
         print '<RowID> <Starting date and time> <Duration> <Process> <Window title> <Number of keys pressed>',
-        if self.args['showtext']:
+        if self.args['showtext'] and self.need_humanreadable:
+            print '<Decrypted Human Readable text>'
+        elif self.args['showtext']:
             print '<Decrypted text>'
         else:
             print
@@ -302,7 +310,10 @@ class Selfstats:
             rows += 1
             print row.id, row.started, pretty_seconds((row.created_at - row.started).total_seconds()), row.process.name, '"%s"' % row.window.title, row.nrkeys,
             if self.args['showtext']:
-                print row.decrypt_text().decode('utf8')
+                if self.need_humanreadable:
+                    print row.decrypt_humanreadable().decode('utf8')
+                else:
+                    print row.decrypt_text().decode('utf8')
             else:
                 print
         print rows, 'rows'
@@ -494,6 +505,7 @@ def parse_config():
 
     parser.add_argument('--key-freqs', action='store_true', help='Summarize a table of absolute and relative number of keystrokes for each used key during the time period. Requires password.')
 
+    parser.add_argument('--human-readable', action='store_true', help='This modifies the --body entry and honors backspace.')
     parser.add_argument('--active', type=int, metavar='seconds', nargs='?', const=ACTIVE_SECONDS, help='Summarize total time spent active during the period. The optional argument gives how many seconds after each mouse click (including scroll up or down) or keystroke that you are considered active. Default is %d.' % ACTIVE_SECONDS)
 
     parser.add_argument('--ratios', type=int, metavar='seconds', nargs='?', const=ACTIVE_SECONDS, help='Summarize the ratio between different metrics in the given period. "Clicks" will not include up or down scrolling. The optional argument is the "seconds" cutoff for calculating active use, like --active.')

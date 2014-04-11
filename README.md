@@ -196,12 +196,12 @@ The --help is a beast that right now looks something like this:
 
 ```
 usage: selfstats [-h] [-c FILE] [-p PASSWORD] [-d DATA_DIR] [-s]
-                    [-D DATE [DATE ...]] [-C CLOCK] [-i ID]
-                    [-b BACK [BACK ...]] [-l LIMIT [LIMIT ...]] [-m nr]
-                    [-T regexp] [-P regexp] [-B regexp] [--ratios] [--clicks]
-                    [--key-freqs] [--active [seconds]] [--periods [seconds]]
-                    [--pactive [seconds]] [--tactive [seconds]] [--pkeys]
-                    [--tkeys]
+                 [-D DATE [DATE ...]] [-C CLOCK] [-i ID] [-b BACK [BACK ...]]
+                 [-l LIMIT [LIMIT ...]] [-m nr] [-T regexp] [-P regexp]
+                 [-B regexp] [--clicks] [--key-freqs] [--human-readable]
+                 [--active [seconds]] [--ratios [seconds]]
+                 [--periods [seconds]] [--pactive [seconds]]
+                 [--tactive [seconds]] [--pkeys] [--tkeys]
 
 Calculate statistics on selfspy data. Per default it will show non-text
 information that matches the filter. Adding '-s' means also show text. Adding
@@ -273,8 +273,8 @@ optional arguments:
   -m nr, --min-keys nr  Only allow entries with at least <nr> keystrokes
   -T regexp, --title regexp
                         Only allow entries where a search for this <regexp> in
-                        the window title matches something. All regular expressions
-                        are case insensitive.
+                        the window title matches something. All regular
+                        expressions are case insensitive.
   -P regexp, --process regexp
                         Only allow entries where a search for this <regexp> in
                         the process matches something.
@@ -288,6 +288,7 @@ optional arguments:
   --key-freqs           Summarize a table of absolute and relative number of
                         keystrokes for each used key during the time period.
                         Requires password.
+  --human-readable      This modifies the --body entry and honors backspace.
   --active [seconds]    Summarize total time spent active during the period.
                         The optional argument gives how many seconds after
                         each mouse click (including scroll up or down) or

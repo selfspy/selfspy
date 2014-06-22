@@ -55,7 +55,7 @@ http://ost.io/gurgeh/selfspy
 In OS X you also need to enable access for assistive devices.
 To do that in &lt;10.9 there is a checkbox in `System Preferences > Accessibility`,
 in 10.9 you have to add the correct application in
-`System Preferences > Privacy > Accessability`.
+`System Preferences > Privacy > Accessibility`.
 
 ### Running Selfspy
 You run selfspy with `selfspy`. You should probably start with `selfspy --help` to get to know the command line arguments. As of this writing, it should look like this:

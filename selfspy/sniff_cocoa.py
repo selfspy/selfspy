@@ -62,14 +62,21 @@ class Sniffer:
                         | NSFlagsChangedMask)
                 NSEvent.addGlobalMonitorForEventsMatchingMask_handler_(mask, sc.handler)
 
-            def applicationWillTerminate_(self, application):
+            def applicationWillResignActive(self, notification):
+                self.applicationWillTerminate_(notification)
+
+            def applicationShouldTerminate_(self, notification):
+                self.applicationWillTerminate_(notification)
+
+            def applicationWillTerminate_(self, notification):
                 # need to release the lock here as when the
                 # application terminates it does not run the rest the
                 # original main, only the code that has crossed the
                 # pyobc bridge.
                 if cfg.LOCK.is_locked():
                     cfg.LOCK.release()
-                print "Exiting ..."
+                print("Exiting ...")
+                return True
 
         return AppDelegate
 

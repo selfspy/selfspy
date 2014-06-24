@@ -64,9 +64,11 @@ class Sniffer:
 
             def applicationWillResignActive(self, notification):
                 self.applicationWillTerminate_(notification)
+                return True
 
             def applicationShouldTerminate_(self, notification):
                 self.applicationWillTerminate_(notification)
+                return True
 
             def applicationWillTerminate_(self, notification):
                 # need to release the lock here as when the
@@ -75,8 +77,8 @@ class Sniffer:
                 # pyobc bridge.
                 if cfg.LOCK.is_locked():
                     cfg.LOCK.release()
-                print("Exiting ...")
-                return True
+                print("Exiting")
+                return None
 
         return AppDelegate
 

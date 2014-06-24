@@ -22,7 +22,10 @@ import re
 import datetime
 
 from sqlalchemy.ext.declarative import declarative_base, declared_attr
-from sqlalchemy import Index, Column, Boolean, Integer, Unicode, DateTime, Binary, ForeignKey, create_engine
+from sqlalchemy import (
+    Index, Column, Boolean, Integer, Unicode, DateTime, Binary, ForeignKey,
+    create_engine
+)
 from sqlalchemy.orm import sessionmaker, relationship, backref
 
 
@@ -69,7 +72,7 @@ class Window(SpookMixin, Base):
     def __repr__(self):
         return "<Window '%s'>" % (self.title)
 
-    
+
 class Geometry(SpookMixin, Base):
     xpos = Column(Integer, nullable=False)
     ypos = Column(Integer, nullable=False)
@@ -87,7 +90,7 @@ class Geometry(SpookMixin, Base):
     def __repr__(self):
         return "<Geometry (%d, %d), (%d, %d)>" % (self.xpos, self.ypos, self.width, self.height)
 
-    
+
 class Click(SpookMixin, Base):
     button = Column(Integer, nullable=False)
     press = Column(Boolean, nullable=False)
@@ -100,7 +103,7 @@ class Click(SpookMixin, Base):
 
     window_id = Column(Integer, ForeignKey('window.id'), nullable=False)
     window = relationship("Window", backref=backref('clicks'))
-    
+
     geometry_id = Column(Integer, ForeignKey('geometry.id'), nullable=False)
     geometry = relationship("Geometry", backref=backref('clicks'))
 
@@ -118,7 +121,7 @@ class Click(SpookMixin, Base):
     def __repr__(self):
         return "<Click (%d, %d), (%d, %d, %d)>" % (self.x, self.y, self.button, self.press, self.nrmoves)
 
-    
+
 def pad(s, padnum):
     ls = len(s)
     if ls % padnum == 0:

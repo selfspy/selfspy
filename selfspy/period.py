@@ -27,7 +27,7 @@ class Period:
     def append(self, time):
         ltimes = len(self.times)
         end = min(time + self.cutoff, self.maxtime)
-        
+
         def check_in(i):
             if self.times[i][0] <= time <= self.times[i][1]:
                 self.times[i] = (self.times[i][0], max(end, self.times[i][1]))
@@ -52,7 +52,7 @@ class Period:
         else:
             self.times.insert(i, (time, end))
             maybe_merge(i)
-            
+
     def extend(self, times):
         for time in times:
             self.append(time)

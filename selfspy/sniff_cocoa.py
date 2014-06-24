@@ -94,7 +94,8 @@ class Sniffer:
     def handler(self, event):
         try:
             activeApps = self.workspace.runningApplications()
-            #Have to look into this if it is too slow on move and scoll,
+            windowNumber = event.windowNumber()
+            #Have to look into this if it is too slow on move and scroll,
             #right now the check is done for everything.
             for app in activeApps:
                 if app.isActive():
@@ -102,7 +103,7 @@ class Sniffer:
                     windowList = CGWindowListCopyWindowInfo(options,
                                                             kCGNullWindowID)
                     for window in windowList:
-                        if (window['kCGWindowNumber'] == event.windowNumber()
+                        if (window['kCGWindowNumber'] == windowNumber
                             or (not event.windowNumber()
                                 and window['kCGWindowOwnerName'] == app.localizedName())):
                             geometry = window['kCGWindowBounds']

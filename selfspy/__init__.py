@@ -34,6 +34,7 @@ from selfspy import check_password
 
 from selfspy import config as cfg
 
+
 def parse_config():
     conf_parser = argparse.ArgumentParser(description=__doc__, add_help=False,
                                           formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -54,7 +55,7 @@ def parse_config():
 
     parser.add_argument('-n', '--no-text', action='store_true', help='Do not store what you type. This will make your database smaller and less sensitive to security breaches. Process name, window titles, window geometry, mouse clicks, number of keys pressed and key timings will still be stored, but not the actual letters. Key timings are stored to enable activity calculation in selfstats. If this switch is used, you will never be asked for password.')
     parser.add_argument('-r', '--no-repeat', action='store_true', help='Do not store special characters as repeated characters.')
-    
+
     parser.add_argument('--change-password', action="store_true", help='Change the password used to encrypt the keys columns and exit.')
 
     return parser.parse_args()
@@ -83,7 +84,7 @@ def main():
         pass
 
     lockname = os.path.join(args['data_dir'], cfg.LOCK_FILE)
-    cfg.LOCK  = LockFile(lockname)
+    cfg.LOCK = LockFile(lockname)
     if cfg.LOCK.is_locked():
         print '%s is locked! I am probably already running.' % lockname
         print 'If you can find no selfspy process running, it is a stale lock and you can safely remove it.'
@@ -125,7 +126,7 @@ def main():
     cfg.LOCK.acquire()
     try:
         astore.run()
-    except SystemExit:  
+    except SystemExit:
         astore.close()
     except KeyboardInterrupt:
         pass

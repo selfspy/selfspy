@@ -77,14 +77,14 @@ class ActivityStore:
 
     def trycommit(self):
         self.last_commit = time.time()
-        for _ in xrange(1000):
+        for _ in range(1000):
             try:
                 self.session.commit()
                 break
             except sqlalchemy.exc.OperationalError:
                 time.sleep(1)
             except:
-               self.session.rollback()
+                self.session.rollback()
 
     def run(self):
         self.session = self.session_maker()
@@ -98,23 +98,33 @@ class ActivityStore:
         self.sniffer.run()
 
     def got_screen_change(self, process_name, window_name, win_x, win_y, win_width, win_height):
-        """ Receives a screen change and stores any changes. If the process or window has
-            changed it will also store any queued pressed keys.
-            process_name is the name of the process running the current window
-            window_name is the name of the window
-            win_x is the x position of the window
-            win_y is the y position of the window
-            win_width is the width of the window
-            win_height is the height of the window """
-        cur_process = self.session.query(Process).filter_by(name=process_name).scalar()
+        """Receives a screen change and stores any changes.
+        If the process or window has changed it will also store any queued pressed keys.
+        Keyword arguments:
+        process_name -- the name of the process running the current window
+        window_name -- the name of the window
+        win_x -- the x position of the window
+        win_y -- the y position of the window
+        win_width -- the width of the window
+        win_height -- the height of the window"""
+
+        cur_process = self.session.query(
+            Process
+        ).filter_by(
+            name=process_name
+        ).scalar()
         if not cur_process:
             cur_process = Process(process_name)
             self.session.add(cur_process)
 
-        cur_geometry = self.session.query(Geometry).filter_by(xpos=win_x,
-                                                              ypos=win_y,
-                                                              width=win_width,
-                                                              height=win_height).scalar()
+        cur_geometry = self.session.query(
+            Geometry
+        ).filter_by(
+            xpos=win_x,
+            ypos=win_y,
+            width=win_width,
+            height=win_height
+        ).scalar()
         if not cur_geometry:
             cur_geometry = Geometry(win_x, win_y, win_width, win_height)
             self.session.add(cur_geometry)

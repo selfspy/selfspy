@@ -1,7 +1,7 @@
 SQLAlchemy==0.9.4
 lockfile==0.9.1
 pycrypto==2.5
-pyobjc-core==2.5.1
-pyobjc-framework-Cocoa==2.5.1
+pyobjc-core==3.0.1
+pyobjc-framework-Cocoa==3.0.1
 keyring==1.2.2
-pyobjc-framework-Quartz==2.5.1
+pyobjc-framework-Quartz==3.0.1

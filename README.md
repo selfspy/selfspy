@@ -19,7 +19,7 @@ pyWin32: http://sourceforge.net/projects/pywin32/files/pywin32/
 ### Installing Selfspy
 
 If you run ArchLinux, here is an AUR package which may be up-to-date:
-https://aur.archlinux.org/packages.php?ID=58501
+https://aur.archlinux.org/packages/selfspy-git/
 
 To install manually, either clone the repository from Github (git clone git://github.com/gurgeh/selfspy), or click on the Download link on http://github.com/gurgeh/selfspy/ to get the latest Python source.
 

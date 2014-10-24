@@ -93,6 +93,18 @@ def make_time_string(dates, clock):
     if dates is None:
         dates = []
 
+    if isinstance(dates, list) and len(dates)>0:
+        if type(dates[0]) is str:
+            datesstr = " ".join(dates)
+        else:
+            print '%s is of uncompatible type list of %s.' % (who, str(type(dates[0])))
+    elif isinstance(dates, basestring):
+        datesstr = dates.split() # any whitespace
+    else:
+        print '%s is of uncompatible type %s.' % (who, str(type(dates)))
+        sys.exit(1)
+    dates = datesstr
+
     if len(dates) > 3:
         print 'Max three arguments to date', dates
         sys.exit(1)
@@ -137,9 +149,21 @@ def make_time_string(dates, clock):
 
 
 def make_period(q, period, who, start, prop):
-    if len(period) < 1 or len(period) > 2:
-        print '%s needs one or two arguments, not %d.' % (who, len(period)), period
+    if isinstance(period, list) and len(period)>0:
+        if type(period[0]) is str:
+            periodstr = "".join(period)
+        else:
+            print '%s is of uncompatible type list of %s.' % (who, str(type(period[0])))
+    elif isinstance(period, basestring):
+        periodstr = period.translate(None, " \t")
+    else:
+        print '%s is of uncompatible type %s.' % (who, str(type(period)))
         sys.exit(1)
+    pmatch = re.match("(\d+)(["+"".join(PERIOD_LOOKUP.keys())+"]?)", periodstr)
+    if pmatch==None:
+        print '%s has an unrecognizable format: %s' % (who, periodstr)
+        sys.exit(1)
+    period = [pmatch.group(1)]+([pmatch.group(2)] if pmatch.group(2) else [])
 
     d = {}
     val = int(period[0])
@@ -475,6 +499,8 @@ def parse_config():
 
     defaults = {}
     if args.config:
+        if not os.path.exists(args.config):
+            raise  EnvironmentError("Config file %s doesn't exist." % args.config)
         config = ConfigParser.SafeConfigParser()
         config.read([args.config])
         defaults = dict(config.items('Defaults') + config.items("Selfstats"))
@@ -530,7 +556,11 @@ def make_encrypter(password):
 
 
 def main():
-    args = vars(parse_config())
+    try:
+        args = vars(parse_config())
+    except EnvironmentError as e:
+        print str(e)
+        sys.exit(1)
 
     args['data_dir'] = os.path.expanduser(args['data_dir'])
 

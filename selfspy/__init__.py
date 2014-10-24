@@ -44,6 +44,8 @@ def parse_config():
 
     defaults = {}
     if args.config:
+        if not os.path.exists(args.config):
+            raise  EnvironmentError("Config file %s doesn't exist." % args.config)
         config = ConfigParser.SafeConfigParser()
         config.read([args.config])
         defaults = dict(config.items('Defaults'))
@@ -70,7 +72,11 @@ def make_encrypter(password):
 
 
 def main():
-    args = vars(parse_config())
+    try:
+        args = vars(parse_config())
+    except EnvironmentError as e:
+        print str(e)
+        sys.exit(1)
 
     args['data_dir'] = os.path.expanduser(args['data_dir'])
 

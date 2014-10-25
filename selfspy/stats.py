@@ -291,7 +291,7 @@ class Selfstats:
             return
 
         if self.args['min_keys'] is not None:
-            q = q.filter(Keys.nrkeys >= self.args['min_keys'])
+            q = q.filter(models.Keys.nrkeys >= self.args['min_keys'])
 
         if self.args['body']:
             try:

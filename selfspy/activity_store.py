@@ -74,6 +74,7 @@ class ActivityStore:
         self.last_commit = time.time()
 
         self.started = NOW()
+        self.last_screen_change = None
 
     def trycommit(self):
         self.last_commit = time.time()
@@ -107,6 +108,13 @@ class ActivityStore:
         win_y -- the y position of the window
         win_width -- the width of the window
         win_height -- the height of the window"""
+
+        # skip the event if same arguments as last time are passed
+        args = [process_name, window_name, win_x, win_y, win_width, win_height]
+        if self.last_screen_change == args:
+            return
+
+        self.last_screen_change = args
 
         cur_process = self.session.query(
             Process

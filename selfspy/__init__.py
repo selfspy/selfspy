@@ -49,6 +49,11 @@ def parse_config():
         config = ConfigParser.SafeConfigParser()
         config.read([args.config])
         defaults = dict(config.items('Defaults'))
+    else:
+        if os.path.exists(os.path.expanduser('~/.selfspy/selfspy.conf')):
+            config = ConfigParser.SafeConfigParser()
+            config.read([os.path.expanduser('~/.selfspy/selfspy.conf')])
+            defaults = dict(config.items('Defaults'))
 
     parser = argparse.ArgumentParser(description='Monitor your computer activities and store them in an encrypted database for later analysis or disaster recovery.', parents=[conf_parser])
     parser.set_defaults(**defaults)

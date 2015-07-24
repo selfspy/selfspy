@@ -54,6 +54,9 @@ class Sniffer:
         self.record_display = display.Display()
         self.keymap = self.the_display._keymap_codes
 
+        self.atom_NET_WM_NAME = self.the_display.intern_atom('_NET_WM_NAME')
+        self.atom_UTF8_STRING = self.the_display.intern_atom('UTF8_STRING')
+
     def run(self):
         # Check if the extension is present
         if not self.record_display.has_extension("RECORD"):
@@ -165,15 +168,10 @@ class Sniffer:
         python-xlib's method, which (currently) only queries WM_NAME with
         type=STRING."""
 
-        # _NET_WM_NAME = self.the_display.intern_atom('_NET_WM_NAME')
-        _NET_WM_NAME = 370
-        # UTF8_STRING = self.the_display.intern_atom('UTF8_STRING')
-        UTF8_STRING = 355
-
         # Alternatively, we could also try WM_NAME with "UTF8_STRING" and
         # "COMPOUND_TEXT", but _NET_WM_NAME should be good.
 
-        d = win.get_full_property(_NET_WM_NAME, UTF8_STRING)
+        d = win.get_full_property(self.atom_NET_WM_NAME, self.atom_UTF8_STRING)
         if d is None or d.format != 8:
             # Fallback.
             r = win.get_wm_name()

@@ -18,7 +18,7 @@
 import sys
 import getpass
 
-from Tkinter import Tk
+from Tkinter import Tk, StringVar
 from tkSimpleDialog import Dialog
 
 
@@ -111,9 +111,12 @@ def get_tk_password(verify, message=None, force_save=False):
         message = 'Password'
 
     while True:
-        pw, save_to_keychain = PasswordDialog(title='Selfspy encryption password',
+        dialog_info = PasswordDialog(title='Selfspy encryption password',
                             prompt=message,
                             parent=root)
+
+        pw, save_to_keychain = dialog_info.result
+
         if pw is None:
             return ""
 
@@ -150,7 +153,7 @@ class PasswordDialog(Dialog):
         self.cb = Checkbutton(master, text="Save to keychain", variable=self.checkVar)
         self.cb.pack()
         self.cb.grid(row=1, columnspan=2, sticky=W)
-        self.configure(show='*')
+        self.e1.configure(show='*')
 
     def apply(self):
         self.result = (self.e1.get(), self.checkVar.get() == 1)

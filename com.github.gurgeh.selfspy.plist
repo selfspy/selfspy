@@ -7,8 +7,7 @@
     <string>com.github.gurgeh.selfspy</string>
     <key>ProgramArguments</key>
     <array>
-      <string>/usr/local/bin/python</string>
-      <string>/usr/local/share/python/selfspy</string>
+      <string>/usr/local/bin/selfspy</string>
     </array>
     <key>RunAtLoad</key>
     <true/>

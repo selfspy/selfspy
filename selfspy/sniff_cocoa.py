@@ -18,8 +18,8 @@
 from Foundation import NSObject
 from AppKit import NSApplication, NSApp, NSWorkspace
 from Cocoa import (
-    NSEvent,
-    NSKeyDown, NSKeyDownMask, NSKeyUpMask,
+    NSEvent, NSFlagsChanged,
+    NSKeyDown, NSKeyUp, NSKeyDownMask, NSKeyUpMask,
     NSLeftMouseDown, NSLeftMouseUpMask, NSLeftMouseDownMask,
     NSRightMouseDown, NSRightMouseUpMask, NSRightMouseDownMask,
     NSMouseMoved, NSMouseMovedMask,
@@ -31,11 +31,14 @@ from Cocoa import (
 )
 from Quartz import (
     CGWindowListCopyWindowInfo,
+    kCGWindowListExcludeDesktopElements,
     kCGWindowListOptionOnScreenOnly,
     kCGNullWindowID
 )
 from PyObjCTools import AppHelper
 import config as cfg
+import signal
+import time
 
 
 class Sniffer:
@@ -44,6 +47,7 @@ class Sniffer:
         self.mouse_button_hook = lambda x: True
         self.mouse_move_hook = lambda x: True
         self.screen_hook = lambda x: True
+        self.last_check_windows = time.time()
 
     def createAppDelegate(self):
         sc = self
@@ -88,6 +92,10 @@ class Sniffer:
         NSApp().setDelegate_(delegate)
         NSApp().setActivationPolicy_(NSApplicationActivationPolicyProhibited)
         self.workspace = NSWorkspace.sharedWorkspace()
+
+        def handler(signal, frame):
+            AppHelper.stopEventLoop()
+        signal.signal(signal.SIGINT, handler)
         AppHelper.runEventLoop()
 
     def cancel(self):
@@ -95,52 +103,32 @@ class Sniffer:
 
     def handler(self, event):
         try:
-            activeApps = self.workspace.runningApplications()
-            windowNumber = event.windowNumber()
-            #Have to look into this if it is too slow on move and scroll,
-            #right now the check is done for everything.
-            for app in activeApps:
-                if app.isActive():
-                    options = kCGWindowListOptionOnScreenOnly
-                    windowList = CGWindowListCopyWindowInfo(options,
-                                                            kCGNullWindowID)
-                    for window in windowList:
-                        if (window['kCGWindowNumber'] == windowNumber
-                            or (not event.windowNumber()
-                                and window['kCGWindowOwnerName'] == app.localizedName())):
-                            geometry = window['kCGWindowBounds']
-                            self.screen_hook(window['kCGWindowOwnerName'],
-                                             window.get('kCGWindowName', u''),
-                                             geometry['X'],
-                                             geometry['Y'],
-                                             geometry['Width'],
-                                             geometry['Height'])
-                            break
-                    break
-
+            check_windows = False
+            event_type = event.type()
+            todo = lambda: None
+            if (
+                time.time() - self.last_check_windows > 10 and
+                event_type != NSKeyUp
+            ):
+                self.last_check_windows = time.time()
+                check_windows = True
             loc = NSEvent.mouseLocation()
-            if event.type() == NSLeftMouseDown:
-                self.mouse_button_hook(1, loc.x, loc.y)
-#           elif event.type() == NSLeftMouseUp:
-#               self.mouse_button_hook(1, loc.x, loc.y)
-            elif event.type() == NSRightMouseDown:
-                self.mouse_button_hook(3, loc.x, loc.y)
-#           elif event.type() == NSRightMouseUp:
-#               self.mouse_button_hook(2, loc.x, loc.y)
-            elif event.type() == NSScrollWheel:
+            if event_type == NSLeftMouseDown:
+                check_windows = True
+                todo = lambda: self.mouse_button_hook(1, loc.x, loc.y)
+            elif event_type == NSRightMouseDown:
+                check_windows = True
+                todo = lambda: self.mouse_button_hook(3, loc.x, loc.y)
+            elif event_type == NSScrollWheel:
                 if event.deltaY() > 0:
-                    self.mouse_button_hook(4, loc.x, loc.y)
+                    todo = lambda: self.mouse_button_hook(4, loc.x, loc.y)
                 elif event.deltaY() < 0:
-                    self.mouse_button_hook(5, loc.x, loc.y)
+                    todo = lambda: self.mouse_button_hook(5, loc.x, loc.y)
                 if event.deltaX() > 0:
-                    self.mouse_button_hook(6, loc.x, loc.y)
+                    todo = lambda: self.mouse_button_hook(6, loc.x, loc.y)
                 elif event.deltaX() < 0:
-                    self.mouse_button_hook(7, loc.x, loc.y)
-#               if event.deltaZ() > 0:
-#                   self.mouse_button_hook(8, loc.x, loc.y)
-#               elif event.deltaZ() < 0:
-#                   self.mouse_button_hook(9, loc.x, loc.y)
-            elif event.type() == NSKeyDown:
+                    todo = lambda: self.mouse_button_hook(7, loc.x, loc.y)
+            elif event_type == NSKeyDown:
                 flags = event.modifierFlags()
                 modifiers = []  # OS X api doesn't care it if is left or right
                 if flags & NSControlKeyMask:
@@ -158,13 +146,45 @@ class Sniffer:
                     character = "Enter"
                 elif event.keyCode() == 51:
                     character = "Backspace"
-                self.key_hook(event.keyCode(),
+                todo = lambda: self.key_hook(event.keyCode(),
                               modifiers,
                               keycodes.get(character,
                                            character),
                               event.isARepeat())
-            elif event.type() == NSMouseMoved:
-                self.mouse_move_hook(loc.x, loc.y)
+            elif event_type == NSMouseMoved:
+                todo = lambda: self.mouse_move_hook(loc.x, loc.y)
+            elif event_type == NSFlagsChanged:
+                # Register leaving this window on next event
+                self.last_check_windows = 0
+            if check_windows:
+                activeApps = self.workspace.runningApplications()
+                for app in activeApps:
+                    if app.isActive():
+                        app_name = app.localizedName()
+                        options = kCGWindowListOptionOnScreenOnly | kCGWindowListExcludeDesktopElements
+                        windowList = CGWindowListCopyWindowInfo(options,
+                                                                kCGNullWindowID)
+                        windowListLayered = [
+                            w for w in windowList
+                            if w['kCGWindowLayer']
+                        ]
+                        windowList = [
+                            w for w in windowList
+                            if not w['kCGWindowLayer']
+                        ]
+                        windowList = windowList + windowListLayered
+                        for window in windowList:
+                            if window['kCGWindowOwnerName'] == app_name:
+                                geometry = window['kCGWindowBounds']
+                                self.screen_hook(window['kCGWindowOwnerName'],
+                                                 window.get('kCGWindowName', u''),
+                                                 geometry['X'],
+                                                 geometry['Y'],
+                                                 geometry['Width'],
+                                                 geometry['Height'])
+                                break
+                        break
+            todo()
         except (SystemExit, KeyboardInterrupt):
             AppHelper.stopEventLoop()
             return

@@ -570,13 +570,6 @@ def main():
 
     ss = Selfstats(os.path.join(args['data_dir'], cfg.DBNAME), args)
 
-    if args['limit']:
-        try:
-            int(args['limit'][0])
-        except ValueError:
-            print 'First argument to --limit must be an integer'
-            sys.exit(1)
-
     if ss.need_text or ss.need_keys:
         if args['password'] is None:
             args['password'] = get_password(verify=check_with_encrypter)

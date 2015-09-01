@@ -54,6 +54,9 @@ class Sniffer:
         self.record_display = display.Display()
         self.keymap = self.the_display._keymap_codes
 
+        self.atom_NET_WM_NAME = self.the_display.intern_atom('_NET_WM_NAME')
+        self.atom_UTF8_STRING = self.the_display.intern_atom('UTF8_STRING')
+
     def run(self):
         # Check if the extension is present
         if not self.record_display.has_extension("RECORD"):
@@ -159,6 +162,24 @@ class Sniffer:
             return self.keysymdict[keysym]
         return "[%d]" % keysym
 
+    def get_wm_name(self, win):
+        """
+        Custom method to query for _NET_WM_NAME first, before falling back to
+        python-xlib's method, which (currently) only queries WM_NAME with
+        type=STRING."""
+
+        # Alternatively, we could also try WM_NAME with "UTF8_STRING" and
+        # "COMPOUND_TEXT", but _NET_WM_NAME should be good.
+
+        d = win.get_full_property(self.atom_NET_WM_NAME, self.atom_UTF8_STRING)
+        if d is None or d.format != 8:
+            # Fallback.
+            r = win.get_wm_name()
+            if r:
+                return r.decode('latin1')  # WM_NAME with type=STRING.
+        else:
+            return d.value.decode('utf8')
+
     def get_cur_window(self):
         i = 0
         cur_class = None
@@ -173,7 +194,7 @@ class Sniffer:
                     if type(cur_window) is int:
                         return None, None, None
 
-                    cur_name = cur_window.get_wm_name()
+                    cur_name = self.get_wm_name(cur_window)
                     cur_class = cur_window.get_wm_class()
 
                     if cur_class:
@@ -186,7 +207,7 @@ class Sniffer:
             break
         cur_class = cur_class or ''
         cur_name = cur_name or ''
-        return cur_class.decode('latin1'), cur_window, cur_name.decode('latin1')
+        return cur_class.decode('latin1'), cur_window, cur_name
 
     def get_geometry(self, cur_window):
         i = 0

@@ -164,15 +164,15 @@ class Sniffer:
                         options = kCGWindowListOptionOnScreenOnly | kCGWindowListExcludeDesktopElements
                         windowList = CGWindowListCopyWindowInfo(options,
                                                                 kCGNullWindowID)
-                        windowListLayered = [
+                        windowListLowPrio = [
                             w for w in windowList
-                            if w['kCGWindowLayer']
+                            if w['kCGWindowLayer'] or not w.get('kCGWindowName', u'')
                         ]
                         windowList = [
                             w for w in windowList
-                            if not w['kCGWindowLayer']
+                            if not w['kCGWindowLayer'] and w.get('kCGWindowName', u'')
                         ]
-                        windowList = windowList + windowListLayered
+                        windowList = windowList + windowListLowPrio
                         for window in windowList:
                             if window['kCGWindowOwnerName'] == app_name:
                                 geometry = window['kCGWindowBounds']

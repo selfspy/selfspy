@@ -178,7 +178,12 @@ class Sniffer:
             if r:
                 return r.decode('latin1')  # WM_NAME with type=STRING.
         else:
-            return d.value.decode('utf8')
+            # Fixing utf8 issue on Ubuntu (https://github.com/gurgeh/selfspy/issues/133)
+            # Thanks to https://github.com/gurgeh/selfspy/issues/133#issuecomment-142943681
+            try:
+                return d.value.decode('utf8')
+            except UnicodeError:
+                return d.value.encode('utf8').decode('utf8')
 
     def get_cur_window(self):
         i = 0

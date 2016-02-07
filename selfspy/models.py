@@ -70,7 +70,7 @@ class Window(SpookMixin, Base):
         self.process_id = process_id
 
     def __repr__(self):
-        return "<Window '%s'>" % (self.title)
+        return "<Window '%s'>" % (repr(self.title))
 
 
 class Geometry(SpookMixin, Base):

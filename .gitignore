@@ -8,3 +8,4 @@ build/
 bin/
 lib/
 include/
+.python-version

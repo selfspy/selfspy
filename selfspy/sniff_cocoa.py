@@ -40,6 +40,8 @@ import config as cfg
 import signal
 import time
 
+FORCE_SCREEN_CHANGE = 10
+WAIT_ANIMATION = 1
 
 class Sniffer:
     def __init__(self):
@@ -107,7 +109,7 @@ class Sniffer:
             event_type = event.type()
             todo = lambda: None
             if (
-                time.time() - self.last_check_windows > 10 and
+                time.time() - self.last_check_windows > FORCE_SCREEN_CHANGE and
                 event_type != NSKeyUp
             ):
                 self.last_check_windows = time.time()
@@ -154,8 +156,11 @@ class Sniffer:
             elif event_type == NSMouseMoved:
                 todo = lambda: self.mouse_move_hook(loc.x, loc.y)
             elif event_type == NSFlagsChanged:
-                # Register leaving this window on next event
-                self.last_check_windows = 0
+                # Register leaving this window after animations are done
+                # approx (1 second)
+                self.last_check_windows = (time.time() - FORCE_SCREEN_CHANGE +
+                                           WAIT_ANIMATION)
+                check_windows = True
             if check_windows:
                 activeApps = self.workspace.runningApplications()
                 for app in activeApps:
@@ -164,15 +169,15 @@ class Sniffer:
                         options = kCGWindowListOptionOnScreenOnly | kCGWindowListExcludeDesktopElements
                         windowList = CGWindowListCopyWindowInfo(options,
                                                                 kCGNullWindowID)
-                        windowListLayered = [
+                        windowListLowPrio = [
                             w for w in windowList
-                            if w['kCGWindowLayer']
+                            if w['kCGWindowLayer'] or not w.get('kCGWindowName', u'')
                         ]
                         windowList = [
                             w for w in windowList
-                            if not w['kCGWindowLayer']
+                            if not w['kCGWindowLayer'] and w.get('kCGWindowName', u'')
                         ]
-                        windowList = windowList + windowListLayered
+                        windowList = windowList + windowListLowPrio
                         for window in windowList:
                             if window['kCGWindowOwnerName'] == app_name:
                                 geometry = window['kCGWindowBounds']
